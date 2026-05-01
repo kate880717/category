@@ -7,14 +7,14 @@
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Jua&family=Gaegu:wght@400;700&family=Gowun+Dodum&family=Single+Day&family=Do+Hyeon&display=swap" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_two@1.0/Cafe24Ssurround.woff" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
   <style>
     @font-face {
       font-family: 'Cafe24Ssurround';
       src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_two@1.0/Cafe24Ssurround.woff') format('woff');
       font-weight: normal;
       font-style: normal;
+      font-display: swap;
     }
   </style>
   
@@ -37,11 +37,11 @@
       --c-text: #1E293B;
       --c-text-light: #64748B;
       
-      /* 둥글고 귀여운 한국어 폰트 */
-      --font-display: 'Cafe24Ssurround', 'Jua', 'Do Hyeon', sans-serif;
-      --font-body: 'Gowun Dodum', 'Jua', sans-serif;
-      --font-handwrite: 'Gaegu', 'Single Day', sans-serif;
-      --font-cute: 'Jua', 'Gowun Dodum', sans-serif;
+      /* 모든 폰트를 둥글둥글한 Cafe24Ssurround 하나로 통일 */
+      --font-display: 'Cafe24Ssurround', 'Jua', sans-serif;
+      --font-body: 'Cafe24Ssurround', 'Jua', sans-serif;
+      --font-handwrite: 'Cafe24Ssurround', 'Jua', sans-serif;
+      --font-cute: 'Cafe24Ssurround', 'Jua', sans-serif;
       
       /* 강조용 형광펜 컬러 */
       --highlight-yellow: linear-gradient(180deg, transparent 60%, #FEF08A 60%);
@@ -52,15 +52,20 @@
 
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
     html, body { 
+      width: 100vw; width: 100dvw;
       height: 100vh; height: 100dvh;
-      overflow: hidden; 
+      overflow: hidden !important; 
       font-family: var(--font-body); 
       color: var(--c-text);
       user-select: none; -webkit-user-select: none;
-      font-size: 19px;
-      line-height: 1.6;
+      font-size: clamp(16px, 2.2vh, 22px);
+      line-height: 1.5;
       letter-spacing: -0.02em;
+      position: fixed;
+      inset: 0;
     }
+    
+    em, i { font-style: normal; font-weight: bold; }
     
     /* 강조 스타일 - 형광펜 효과 */
     strong, b {
@@ -95,23 +100,30 @@
 
     .screen {
       position: absolute; inset: 0;
+      width: 100%; height: 100%;
       display: flex; flex-direction: column;
-      padding: clamp(8px, 1.5vh, 16px);
-      gap: clamp(8px, 1.2vh, 14px);
-      overflow: hidden;
+      padding: clamp(6px, 1vh, 12px);
+      gap: clamp(6px, 1vh, 12px);
+      overflow: hidden !important;
     }
+    .screen > * { max-width: 100%; }
 
-    /* 인트로 카드 */
+    /* 인트로 카드 - 화면 꽉 차게 */
     .intro-card {
       background: white;
-      border-radius: clamp(24px, 4vw, 48px);
-      padding: clamp(20px, 4vh, 48px);
-      max-width: min(560px, 90vw);
+      border-radius: clamp(20px, 3vw, 40px);
+      padding: clamp(16px, 2.5vh, 32px) clamp(20px, 3vw, 40px);
       width: 100%;
+      max-width: min(720px, 96vw);
+      max-height: 96vh;
+      max-height: 96dvh;
       text-align: center;
-      box-shadow: 0 20px 50px rgba(99, 102, 241, 0.15), 0 0 0 8px rgba(199, 210, 254, 0.4);
+      box-shadow: 0 20px 50px rgba(99, 102, 241, 0.15), 0 0 0 6px rgba(199, 210, 254, 0.4);
       position: relative;
       overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
     }
     .intro-card::before {
       content: '';
@@ -125,33 +137,32 @@
     
     .intro-title {
       font-family: var(--font-display);
-      font-size: clamp(34px, 6vh, 56px);
+      font-size: clamp(26px, 4.5vh, 42px);
       color: var(--c-primary-dark);
-      margin: 16px 0 10px;
+      margin: clamp(8px, 1.5vh, 14px) 0 clamp(6px, 1vh, 10px);
       letter-spacing: -1px;
-      line-height: 1.3;
+      line-height: 1.2;
       text-shadow: 2px 2px 0 rgba(99, 102, 241, 0.1);
     }
     .intro-subtitle {
       font-family: var(--font-body);
-      font-size: clamp(20px, 3vh, 26px);
+      font-size: clamp(15px, 2.2vh, 21px);
       color: var(--c-text);
-      margin-bottom: 24px;
-      line-height: 1.7;
+      margin-bottom: clamp(10px, 1.5vh, 16px);
+      line-height: 1.5;
       word-break: keep-all;
       font-weight: 400;
     }
     .intro-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: 10px;
-      margin-bottom: 24px;
+      gap: clamp(6px, 1vh, 10px);
     }
     .intro-card-mini {
-      padding: clamp(12px, 2vh, 18px) 14px;
-      border-radius: 18px;
+      padding: clamp(8px, 1.5vh, 14px) 12px;
+      border-radius: 16px;
       font-family: var(--font-display);
-      font-size: clamp(17px, 2.3vh, 22px);
+      font-size: clamp(15px, 2vh, 19px);
       font-weight: bold;
     }
     .intro-card-mini.c1 { background: #FEF3C7; color: #92400E; }
@@ -162,12 +173,12 @@
     /* 버튼 */
     .btn-main {
       width: 100%;
-      padding: clamp(18px, 2.8vh, 26px);
+      padding: clamp(14px, 2.2vh, 22px);
       background: linear-gradient(180deg, #818CF8, #6366F1);
       color: white;
-      border-radius: clamp(20px, 3vw, 32px);
+      border-radius: clamp(18px, 2.5vw, 28px);
       font-family: var(--font-display);
-      font-size: clamp(24px, 3.2vh, 32px);
+      font-size: clamp(20px, 2.8vh, 28px);
       box-shadow: 0 8px 0 0 #4338CA, 0 12px 24px rgba(99, 102, 241, 0.3);
       transition: all 0.15s;
       letter-spacing: 0.5px;
@@ -438,6 +449,26 @@
       z-index: 1000;
       box-shadow: 0 20px 40px rgba(0,0,0,0.25);
     }
+    /* 클릭으로 선택된 상태 */
+    .draggable-item.selected {
+      transform: scale(1.15);
+      box-shadow: 0 0 0 6px var(--c-accent-yellow), 0 12px 30px rgba(251, 191, 36, 0.5);
+      animation: bounce-select 0.6s infinite;
+      cursor: pointer;
+    }
+    @keyframes bounce-select {
+      0%, 100% { transform: scale(1.15) translateY(0); }
+      50% { transform: scale(1.15) translateY(-6px); }
+    }
+    /* 클릭 가능 분류함 */
+    .drop-bin.click-target {
+      animation: pulse-bin 1s ease-in-out infinite;
+      cursor: pointer;
+    }
+    @keyframes pulse-bin {
+      0%, 100% { box-shadow: inset 0 0 0 0 var(--c-accent-yellow); }
+      50% { box-shadow: inset 0 0 0 6px var(--c-accent-yellow); }
+    }
     .item-icon {
       font-size: clamp(52px, 8vh, 80px);
       line-height: 1;
@@ -460,56 +491,74 @@
     .drop-bin {
       border: 4px dashed;
       border-radius: 22px;
-      padding: clamp(6px, 1.2vh, 12px);
+      padding: clamp(8px, 1.4vh, 14px);
       display: flex;
       flex-direction: column;
       overflow: hidden;
       transition: all 0.2s;
+      min-height: 0;
+      position: relative;
+      z-index: 2;
     }
     .drop-bin.drag-over {
       transform: scale(1.02);
       box-shadow: inset 0 0 0 4px rgba(99, 102, 241, 0.3);
     }
     .bin-label-row {
-      display: flex; align-items: center; gap: 6px;
-      margin-bottom: 4px; flex-shrink: 0;
+      display: flex; align-items: center; gap: 8px;
+      margin-bottom: 6px; flex-shrink: 0;
     }
     .bin-label {
       background: white;
-      padding: 6px 16px;
+      padding: 6px 14px;
       border-radius: 999px;
       font-family: var(--font-display);
-      font-size: clamp(16px, 2.3vh, 21px);
+      font-size: clamp(15px, 2.1vh, 19px);
       box-shadow: 0 2px 4px rgba(0,0,0,0.05);
       border: 2px solid;
     }
     .bin-count {
-      font-family: var(--font-body);
-      font-size: clamp(13px, 1.7vh, 15px);
+      font-family: var(--font-display);
+      font-size: clamp(12px, 1.6vh, 14px);
       color: var(--c-text-light);
     }
     .bin-items {
       flex: 1;
       display: flex; flex-wrap: wrap;
-      gap: 8px;
+      gap: 6px;
       align-content: flex-start;
+      justify-content: center;
       overflow-y: auto;
-      padding: 2px;
+      overflow-x: hidden;
+      padding: 4px;
+      min-height: 0;
+      align-items: flex-start;
     }
     .bin-item {
-      background: rgba(255,255,255,0.85);
-      border-radius: 14px;
-      padding: 6px 10px;
+      background: rgba(255,255,255,0.95);
+      border-radius: 12px;
+      padding: 4px 8px;
       display: flex; flex-direction: column; align-items: center;
       box-shadow: 0 2px 4px rgba(0,0,0,0.06);
       animation: pop-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      flex-shrink: 0;
+      max-width: 100%;
     }
     @keyframes pop-in {
       0% { transform: scale(0) rotate(180deg); }
       100% { transform: scale(1) rotate(0); }
     }
-    .bin-item .bin-item-icon { font-size: clamp(36px, 5.5vh, 52px); line-height: 1; }
-    .bin-item .bin-item-name { font-family: var(--font-display); font-size: clamp(12px, 1.5vh, 14px); color: var(--c-text-light); }
+    .bin-item .bin-item-icon { 
+      font-size: clamp(28px, 4.5vh, 42px); 
+      line-height: 1; 
+    }
+    .bin-item .bin-item-name { 
+      font-family: var(--font-display); 
+      font-size: clamp(10px, 1.4vh, 12px); 
+      color: var(--c-text-light); 
+      margin-top: 2px;
+      white-space: nowrap;
+    }
 
     .bin-amber { background: #FFFBEB; border-color: #FCD34D; }
     .bin-amber .bin-label { color: #92400E; border-color: #FCD34D; }
@@ -647,16 +696,22 @@
 
     .block-svg { filter: drop-shadow(0 2px 4px rgba(0,0,0,0.15)); pointer-events: none; }
 
-    /* 녹음 */
+    /* 녹음 카드 - 화면 꽉 차게 */
     .record-card {
       background: linear-gradient(180deg, white, #FAF5FF);
-      border-radius: clamp(24px, 3.5vh, 36px);
-      padding: clamp(20px, 3.5vh, 36px);
-      max-width: min(720px, 92vw);
+      border-radius: clamp(20px, 3vh, 32px);
+      padding: clamp(14px, 2vh, 24px) clamp(18px, 2.5vw, 32px);
+      max-width: min(720px, 96vw);
+      max-height: 96vh;
+      max-height: 96dvh;
       width: 100%;
       box-shadow: 0 16px 40px rgba(99, 102, 241, 0.15);
       text-align: center;
       border: 4px solid white;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      overflow: hidden;
     }
     .record-question {
       font-family: var(--font-display);
@@ -711,27 +766,36 @@
     }
     .transcript-empty { color: #94A3B8; font-family: var(--font-body); }
 
-    /* 자기평가 */
+    /* 자기평가 - 별 명확하게 */
     .stars-container {
-      display: flex; justify-content: center; gap: clamp(10px, 2vw, 18px);
-      margin: clamp(16px, 2.5vh, 24px) 0;
+      display: flex; justify-content: center; gap: clamp(8px, 1.8vw, 16px);
+      margin: clamp(14px, 2.2vh, 22px) 0;
     }
     .star-btn {
-      font-size: clamp(54px, 9vh, 80px);
+      font-size: clamp(56px, 9vh, 80px);
       line-height: 1;
-      transition: transform 0.15s;
-      filter: grayscale(1) brightness(1.4);
-      opacity: 0.5;
+      transition: all 0.2s;
+      background: #F1F5F9;
+      border-radius: 50%;
+      width: clamp(70px, 11vh, 96px);
+      height: clamp(70px, 11vh, 96px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 4px solid #CBD5E1;
+      color: #94A3B8;
     }
     .star-btn.filled {
-      filter: none; opacity: 1;
+      background: #FEF3C7;
+      border-color: #FBBF24;
+      color: #FBBF24;
       animation: star-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
     @keyframes star-pop {
       0% { transform: scale(0.5) rotate(-180deg); }
       100% { transform: scale(1) rotate(0); }
     }
-    .star-btn:hover { transform: scale(1.2); }
+    .star-btn:hover { transform: scale(1.15); }
 
     /* 임명장 */
     .stamp-card {
@@ -1055,8 +1119,8 @@
     function BlockSvg(block, sizePx = 56) {
       const colorMap = { red: '#EF4444', blue: '#3B82F6', yellow: '#FBBF24', green: '#10B981' };
       const strokeMap = { red: '#B91C1C', blue: '#1D4ED8', yellow: '#D97706', green: '#047857' };
-      const isBig = block.크기 === 'big' || block.size === 'big';
-      const renderSize = isBig ? sizePx : sizePx * 0.65;
+      // 모든 블록 같은 크기 (크기 기준 제거됨)
+      const renderSize = sizePx;
       const color = block.색깔 || block.color;
       const shape = block.모양 || block.shape;
       const fill = colorMap[color], stroke = strokeMap[color];
@@ -1135,10 +1199,17 @@
     }
 
     // ================================================
-    //  드래그 시스템
+    //  클릭+드래그 시스템 (저학년 친화)
     // ================================================
+    
+    // 전역: 현재 선택된 아이템
+    window.SELECTED_ITEM = null;
+    window.SELECTED_ON_DROP = null;
+    
     function makeDraggable(element, onDrop) {
       let isDragging = false;
+      let didMove = false;
+      let startX, startY;
       let offsetX, offsetY;
       let placeholder;
       
@@ -1146,52 +1217,77 @@
         if (e.touches) return e.touches[0] || e.changedTouches[0];
         return e;
       }
+      
       function start(e) {
         const evt = getEvent(e);
+        startX = evt.clientX;
+        startY = evt.clientY;
+        didMove = false;
         isDragging = true;
         const rect = element.getBoundingClientRect();
         offsetX = evt.clientX - rect.left;
         offsetY = evt.clientY - rect.top;
-        placeholder = element.cloneNode(true);
-        placeholder.style.visibility = 'hidden';
-        element.parentNode.insertBefore(placeholder, element);
-        element.style.position = 'fixed';
-        element.style.zIndex = '1000';
-        element.style.left = rect.left + 'px';
-        element.style.top = rect.top + 'px';
-        element.style.width = rect.width + 'px';
-        element.classList.add('dragging');
+        // 드래그용 placeholder는 실제 움직이기 시작할 때 생성
         e.preventDefault();
       }
+      
       function move(e) {
         if (!isDragging) return;
         const evt = getEvent(e);
-        element.style.left = (evt.clientX - offsetX) + 'px';
-        element.style.top = (evt.clientY - offsetY) + 'px';
-        document.querySelectorAll('.drop-bin').forEach(z => z.classList.remove('drag-over'));
-        const dropZone = findDropZoneAt(evt.clientX, evt.clientY);
-        if (dropZone) dropZone.classList.add('drag-over');
-        e.preventDefault();
+        const dx = Math.abs(evt.clientX - startX);
+        const dy = Math.abs(evt.clientY - startY);
+        // 5px 이상 움직였을 때만 드래그 시작
+        if (!didMove && (dx > 5 || dy > 5)) {
+          didMove = true;
+          const rect = element.getBoundingClientRect();
+          placeholder = element.cloneNode(true);
+          placeholder.style.visibility = 'hidden';
+          element.parentNode.insertBefore(placeholder, element);
+          element.style.position = 'fixed';
+          element.style.zIndex = '1000';
+          element.style.left = rect.left + 'px';
+          element.style.top = rect.top + 'px';
+          element.style.width = rect.width + 'px';
+          element.classList.add('dragging');
+        }
+        if (didMove) {
+          element.style.left = (evt.clientX - offsetX) + 'px';
+          element.style.top = (evt.clientY - offsetY) + 'px';
+          document.querySelectorAll('.drop-bin').forEach(z => z.classList.remove('drag-over'));
+          const dropZone = findDropZoneAt(evt.clientX, evt.clientY);
+          if (dropZone) dropZone.classList.add('drag-over');
+          e.preventDefault();
+        }
       }
+      
       function end(e) {
         if (!isDragging) return;
         isDragging = false;
         const evt = getEvent(e);
-        document.querySelectorAll('.drop-bin').forEach(z => z.classList.remove('drag-over'));
-        const dropZone = findDropZoneAt(evt.clientX, evt.clientY);
-        element.style.position = '';
-        element.style.zIndex = '';
-        element.style.left = '';
-        element.style.top = '';
-        element.style.width = '';
-        element.classList.remove('dragging');
-        if (placeholder) { placeholder.remove(); placeholder = null; }
-        if (dropZone && onDrop) onDrop(dropZone.id, dropZone);
+        
+        if (didMove) {
+          // 드래그 종료
+          document.querySelectorAll('.drop-bin').forEach(z => z.classList.remove('drag-over'));
+          const dropZone = findDropZoneAt(evt.clientX, evt.clientY);
+          element.style.position = '';
+          element.style.zIndex = '';
+          element.style.left = '';
+          element.style.top = '';
+          element.style.width = '';
+          element.classList.remove('dragging');
+          if (placeholder) { placeholder.remove(); placeholder = null; }
+          if (dropZone && onDrop) onDrop(dropZone.id, dropZone);
+        } else {
+          // 클릭으로 처리 (안 움직였음)
+          handleItemClick(element, onDrop);
+        }
       }
+      
       function findDropZoneAt(x, y) {
         const elements = document.elementsFromPoint(x, y);
         return elements.find(el => el.classList && el.classList.contains('drop-bin'));
       }
+      
       element.addEventListener('mousedown', start);
       element.addEventListener('touchstart', start, { passive: false });
       document.addEventListener('mousemove', move);
@@ -1199,94 +1295,135 @@
       document.addEventListener('mouseup', end);
       document.addEventListener('touchend', end);
     }
+    
+    // 클릭 방식 처리
+    function handleItemClick(element, onDrop) {
+      playSfx('click');
+      // 이미 선택된 아이템 다시 누르면 해제
+      if (SELECTED_ITEM === element) {
+        clearSelection();
+        return;
+      }
+      // 이전 선택 해제
+      clearSelection();
+      // 새로 선택
+      SELECTED_ITEM = element;
+      SELECTED_ON_DROP = onDrop;
+      element.classList.add('selected');
+      // 모든 분류함을 클릭 가능 모드로
+      document.querySelectorAll('.drop-bin').forEach(bin => {
+        bin.classList.add('click-target');
+        bin.addEventListener('click', binClickHandler);
+      });
+      updateFeedback('👆 이제 <strong>분류함</strong>을 콕! 눌러봐요 ✨', 'thinking');
+    }
+    
+    function binClickHandler(e) {
+      const bin = e.currentTarget;
+      if (!SELECTED_ITEM || !SELECTED_ON_DROP) return;
+      const onDrop = SELECTED_ON_DROP;
+      const elem = SELECTED_ITEM;
+      const binId = bin.id;
+      clearSelection();
+      onDrop(binId, bin);
+    }
+    
+    function clearSelection() {
+      if (SELECTED_ITEM) {
+        SELECTED_ITEM.classList.remove('selected');
+      }
+      SELECTED_ITEM = null;
+      SELECTED_ON_DROP = null;
+      document.querySelectorAll('.drop-bin').forEach(bin => {
+        bin.classList.remove('click-target');
+        bin.removeEventListener('click', binClickHandler);
+      });
+    }
 
     // ================================================
     //  화면들
     // ================================================
     function screenIntro() {
       showScreen(`
-        <div style="flex:1; display:flex; align-items:center; justify-content:center; overflow-y:auto;">
+        <div style="flex:1; display:flex; align-items:center; justify-content:center;">
           <div class="intro-card">
-            ${FairySvg('happy', 130)}
-            <h1 class="intro-title">🔍 창의 분류 박물관 ✨</h1>
+            ${FairySvg('happy', 100)}
+            <h1 class="intro-title">🔍 창의 분류 박물관</h1>
             <p class="intro-subtitle">
               안녕! 친구들 🙋‍♀️🙋‍♂️<br/>
-              오늘은 <span class="hi-yellow text-purple">분류하기</span>를<br/>
-              함께 배워볼 거예요!
+              <span class="hi-yellow"><strong>분류하기</strong></span>를 배워봐요!
             </p>
-            <div style="background:#FFF5F5; border:4px solid #FBCFE8; border-radius:24px; padding:18px; margin-bottom:20px;">
-              <div style="font-family:var(--font-display); color:#BE185D; font-size:clamp(20px, 2.6vh, 24px); margin-bottom:10px;">
-                💖 이런 걸 배워요!
-              </div>
-              <p style="font-family:var(--font-body); color:#831843; font-size:clamp(17px, 2.3vh, 20px); line-height:1.7;">
-                같은 점을 찾아 모으고 🔎<br/>
-                <span class="hi-pink"><strong>분류 기준</strong></span>을 정해서<br/>
-                예쁘게 나누어 봐요! 🎀
-              </p>
-            </div>
-            <div style="background:#FFFBEB; border:4px solid #FCD34D; border-radius:22px; padding:18px; margin-bottom:22px;">
-              <div style="font-family:var(--font-display); color:#92400E; font-size:clamp(20px, 2.6vh, 24px); margin-bottom:12px;">
-                📚 오늘 할 일
-              </div>
+            <div style="background:#FFFBEB; border:3px solid #FCD34D; border-radius:18px; padding:clamp(12px, 1.8vh, 18px); margin-bottom:clamp(14px, 2vh, 20px);">
               <div class="intro-grid">
-                <div class="intro-card-mini c1">📦 ① 학용품</div>
-                <div class="intro-card-mini c2">🦓 ② 동물</div>
-                <div class="intro-card-mini c3">🎯 ③ 기준 찾기</div>
-                <div class="intro-card-mini c4">🧱 ④ 자유 분류</div>
+                <div class="intro-card-mini c1">📦 학용품</div>
+                <div class="intro-card-mini c2">🦓 동물</div>
+                <div class="intro-card-mini c3">🎯 기준 찾기</div>
+                <div class="intro-card-mini c4">🧱 자유 분류</div>
               </div>
             </div>
-            <button class="btn-main" onclick="screenStudentSelect()">
-              🚀 탐험 시작하기 🚀
+            <button class="btn-main" onclick="askMicPermission()">
+              🚀 시작하기 🚀
             </button>
-            <p style="font-family:var(--font-body); color:var(--c-text-light); font-size:clamp(15px, 2vh, 18px); margin-top:16px; line-height:1.5;">
-              💡 소리를 듣고 싶으면 🔇 아이콘을<br/>
-              눌러서 켜주세요! 🔊
-            </p>
           </div>
         </div>
       `);
+    }
+    
+    /* 마이크 권한 요청 (사전·사후 녹음용) */
+    async function askMicPermission() {
+      playSfx('click');
+      // 마이크 권한 미리 요청
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        stream.getTracks().forEach(t => t.stop()); // 일단 멈춤 (실제 녹음은 나중)
+        STATE.micGranted = true;
+        screenStudentSelect();
+      } catch (err) {
+        // 거부됐어도 진행 (녹음은 건너뛰기 가능)
+        showModal(`
+          <div style="font-size:80px; line-height:1;">🎤</div>
+          <h2 class="modal-title">마이크 사용 안내</h2>
+          <p class="modal-body">
+            오늘 활동에서 <span class="hi-pink"><strong>녹음하기</strong></span>가 있어요!<br/>
+            마이크가 안 되어도 괜찮아요 😊<br/>
+            <small>(녹음은 건너뛸 수 있어요)</small>
+          </p>
+          <button class="btn-main" onclick="closeModal(); screenStudentSelect();">😊 알겠어요!</button>
+        `);
+      }
     }
 
     function screenStudentSelect() {
       playSfx('click');
       const students = STATE.data.students || [];
       
+      const studentOptions = students.map(s => {
+        const num = String(s.학번 || '').replace(/[^\d]/g, '');
+        const name = String(s.이름 || '');
+        return { num: num, name: name, raw: s };
+      }).filter(s => s.name);
+      
       showScreen(`
-        ${renderTutorial('<span class="text-purple">👋 친구야!</span> ① 우리 반 고르고 → ② 내 이름 골라요! 🎯')}
-        <div style="flex:1; display:flex; align-items:center; justify-content:center; padding:20px; overflow-y:auto;">
-          <div class="record-card" style="max-width:540px;">
-            <div style="font-size:100px; line-height:1;">🎒</div>
-            <h1 class="intro-title" style="margin:12px 0;">누구인가요? 🧐</h1>
-            <p class="intro-subtitle" style="margin-bottom:24px;">
-              아래 순서대로<br/>
-              <span class="hi-blue">차근차근</span> 골라주세요! 😊
-            </p>
+        ${renderTutorial('<strong>내 이름</strong>을 골라주세요!')}
+        <div style="flex:1; display:flex; align-items:center; justify-content:center;">
+          <div class="record-card" style="max-width:min(520px, 92vw);">
+            <div style="font-size:clamp(70px, 10vh, 100px); line-height:1;">🎒</div>
+            <h1 class="intro-title" style="margin:clamp(8px, 1.5vh, 14px) 0;">누구인가요?</h1>
             
-            <div style="text-align:left; margin-bottom:20px; background:#F0F9FF; border:4px solid #BAE6FD; border-radius:20px; padding:18px;">
-              <label style="display:flex; align-items:center; gap:10px; font-family:var(--font-display); font-size:clamp(22px, 2.8vh, 26px); color:#0C4A6E; margin-bottom:12px;">
-                <span style="background:linear-gradient(135deg, #6366F1, #8B5CF6); color:white; width:40px; height:40px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:22px;">1</span>
-                <span>📋 우리 반은? 🏫</span>
+            <div style="text-align:left; margin-bottom:clamp(14px, 2vh, 20px); background:#FDF4FF; border:4px solid #E9D5FF; border-radius:18px; padding:clamp(14px, 2vh, 20px);">
+              <label style="display:block; font-family:var(--font-display); font-size:clamp(20px, 2.7vh, 24px); color:#6B21A8; margin-bottom:clamp(10px, 1.5vh, 14px);">
+                👤 내 이름은?
               </label>
-              <select id="class-select" class="text-input" onchange="filterStudents()" style="cursor:pointer;">
-                <option value="">👇 우리 반을 골라주세요</option>
-                ${[...new Set(students.map(s => s.반).filter(c => c))].map(c => 
-                  `<option value="${c}">${c}</option>`
+              <select id="student-select" class="text-input" onchange="enableStartBtn()" style="cursor:pointer; font-size:clamp(18px, 2.5vh, 22px);">
+                <option value="">👇 골라주세요</option>
+                ${studentOptions.map(s => 
+                  `<option value="${s.num}">${s.num}번 ${s.name}</option>`
                 ).join('')}
               </select>
             </div>
             
-            <div style="text-align:left; margin-bottom:24px; background:#FDF4FF; border:4px solid #E9D5FF; border-radius:20px; padding:18px;">
-              <label style="display:flex; align-items:center; gap:10px; font-family:var(--font-display); font-size:clamp(22px, 2.8vh, 26px); color:#6B21A8; margin-bottom:12px;">
-                <span style="background:linear-gradient(135deg, #EC4899, #8B5CF6); color:white; width:40px; height:40px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:22px;">2</span>
-                <span>👤 내 이름은? 😊</span>
-              </label>
-              <select id="student-select" class="text-input" disabled onchange="enableStartBtn()" style="cursor:pointer;">
-                <option value="">👆 먼저 반을 선택해 주세요!</option>
-              </select>
-            </div>
-            
             <button id="start-student-btn" class="btn-main" disabled onclick="confirmStudent()">
-              🌟 나예요! 시작할래요 🌟
+              🌟 시작하기 🌟
             </button>
           </div>
         </div>
@@ -1297,33 +1434,15 @@
         </div>
       `);
       
-      if (students.length === 0) {
+      if (studentOptions.length === 0) {
         showModal(`
-          <div style="font-size:80px;">😢</div>
+          <div style="font-size:80px; line-height:1;">😢</div>
           <h2 class="modal-title">학생 명단이 비어있어요!</h2>
-          <p class="modal-body">선생님께 알려주세요! 🙋‍♀️<br/>구글 시트의 <strong>학생명단</strong>을 확인해야 해요.</p>
-          <button class="btn-secondary" onclick="closeModal()">알겠어요 👌</button>
+          <p class="modal-body">선생님께 알려주세요!</p>
+          <button class="btn-secondary" onclick="closeModal()">알겠어요</button>
         `);
       }
     }
-    
-    window.filterStudents = function() {
-      playSfx('click');
-      const cls = document.getElementById('class-select').value;
-      const studentSelect = document.getElementById('student-select');
-      const startBtn = document.getElementById('start-student-btn');
-      const filtered = (STATE.data.students || []).filter(s => s.반 === cls);
-      
-      if (cls === '') {
-        studentSelect.disabled = true;
-        studentSelect.innerHTML = '<option value="">-- 먼저 반을 선택해 주세요 --</option>';
-      } else {
-        studentSelect.disabled = false;
-        studentSelect.innerHTML = '<option value="">-- 이름을 선택하세요 --</option>' +
-          filtered.map(s => `<option value="${s.학번}">${s.학번}번 ${s.이름}</option>`).join('');
-      }
-      startBtn.disabled = true;
-    };
     
     window.enableStartBtn = function() {
       const studentId = document.getElementById('student-select').value;
@@ -1332,13 +1451,14 @@
     
     window.confirmStudent = function() {
       playSfx('click');
-      const cls = document.getElementById('class-select').value;
-      const studentId = document.getElementById('student-select').value;
-      const student = (STATE.data.students || []).find(s => String(s.학번) === String(studentId) && s.반 === cls);
+      const studentNum = document.getElementById('student-select').value;
+      const student = (STATE.data.students || []).find(s => 
+        String(s.학번).replace(/[^\d]/g, '') === String(studentNum)
+      );
       if (!student) return;
-      selectStudent(student.학번, student.이름, student.반);
+      selectStudent(student.학번, student.이름, student.반 || '');
     };
-
+    
     function selectStudent(id, name, cls) {
       playSfx('click');
       STATE.studentId = id;
@@ -1350,38 +1470,21 @@
 
     function screenWelcomeTutorial() {
       showScreen(`
-        <div style="flex:1; display:flex; align-items:center; justify-content:center; overflow-y:auto;">
+        <div style="flex:1; display:flex; align-items:center; justify-content:center;">
           <div class="intro-card">
-            <div style="font-size:90px; line-height:1;">👋😊</div>
+            <div style="font-size:clamp(60px, 9vh, 90px); line-height:1;">👋😊</div>
             <h1 class="intro-title"><span class="text-pink">${STATE.studentName}</span> 친구!<br/>반가워요 💕</h1>
             <p class="intro-subtitle">
-              오늘은 <span class="hi-yellow text-purple">"분류"</span>를<br/>
-              배워볼 거예요! 🎉<br/>
-              아래 순서대로 차근차근 해봐요 🌈
+              <span class="hi-yellow">분류</span>를 배워봐요! 🌈
             </p>
-            <div style="background:#F0F9FF; border:4px solid #BAE6FD; border-radius:24px; padding:20px; margin-bottom:22px; text-align:left;">
-              <div style="margin-bottom:14px; font-family:var(--font-display); font-size:clamp(22px, 2.9vh, 26px); color:#0C4A6E; text-align:center;">
-                📚 오늘의 학습 순서 ✨
-              </div>
-              <div style="font-family:var(--font-body); font-size:clamp(18px, 2.5vh, 21px); line-height:2.2; color:var(--c-text);">
-                <div>🎤 <strong>학습 전 말하기</strong> 🌱</div>
-                <div>📦 ① 학용품 분류하기</div>
-                <div>🦓 ② 동물 분류하기</div>
-                <div>🎯 ③ 분류 기준 찾기</div>
-                <div>🧱 ④ 내가 정한 기준으로 분류!</div>
-                <div>🎤 <strong>학습 후 말하기</strong> 🌟</div>
-                <div>⭐ 자기평가 + 임명장 🏆</div>
-              </div>
-            </div>
-            <div style="background:#FFF0F5; border:4px solid #FBCFE8; border-radius:22px; padding:18px; margin-bottom:22px;">
-              <p style="font-family:var(--font-body); color:#9F1239; font-size:clamp(18px, 2.4vh, 21px); line-height:1.7;">
-                💕 <span class="hi-pink"><strong>천천히, 차근차근</strong></span> 해도 괜찮아요!<br/>
-                💪 틀려도 <strong>다시 도전</strong>할 수 있어요!<br/>
-                🌟 우리 모두 <strong>잘할 수 있어요!</strong>
+            <div style="background:#FFF0F5; border:3px solid #FBCFE8; border-radius:18px; padding:clamp(12px, 1.8vh, 18px); margin-bottom:clamp(14px, 2vh, 20px);">
+              <p style="color:#9F1239; font-size:clamp(17px, 2.3vh, 21px); line-height:1.6;">
+                💕 천천히 차근차근!<br/>
+                💪 틀려도 괜찮아요!
               </p>
             </div>
             <button class="btn-main" onclick="screenPreRecord(0)">
-              🌟 자, 시작해볼까요? 🌟
+              🌟 시작! 🌟
             </button>
           </div>
         </div>
@@ -1397,27 +1500,49 @@
     let currentTranscript = '';
 
     /**
-     * STT 텍스트 정제
-     * - 타임스탬프(T1234, 1234T 등) 제거
-     * - 단독 영문/숫자 잡음 제거
-     * - 의미 없는 짧은 토큰 제거
+     * STT 텍스트 정제 - 잡음 제거
      */
     function cleanTranscript(text) {
       if (!text) return '';
-      let cleaned = text;
-      // T로 시작하는 타임스탬프 패턴 제거 (T1234, T12:34 등)
-      cleaned = cleaned.replace(/\bT\d+[:\d]*\b/gi, '');
-      // 단독으로 떠 있는 알파벳+숫자 조합 제거 (예: T1, P12, X9999)
-      cleaned = cleaned.replace(/\b[A-Z]\d+\b/g, '');
-      // 단독 영문 한 글자 제거 (한국어 대화에서 의미 없음)
-      cleaned = cleaned.replace(/(?<=^|\s)[a-zA-Z](?=\s|$)/g, '');
-      // 연속된 공백 정리
+      let cleaned = String(text);
+      // 1. T로 시작하는 모든 패턴 제거 (T1234, T12:34, t123 등)
+      cleaned = cleaned.replace(/\b[Tt]\d+[:\-\d]*\b/g, '');
+      // 2. 숫자T 형태 (1234T 등) 제거
+      cleaned = cleaned.replace(/\b\d+[Tt]\b/g, '');
+      // 3. 영문 한 글자+숫자 조합 (P12, X9, A1 등) 제거
+      cleaned = cleaned.replace(/\b[A-Za-z]\d{1,}\b/g, '');
+      // 4. 숫자만 4자리 이상 연속 (타임스탬프성) 제거
+      cleaned = cleaned.replace(/\b\d{4,}\b/g, '');
+      // 5. 단독 영문 한 글자 제거 (한국어에서 의미 없음)
+      cleaned = cleaned.replace(/(?:^|\s)[A-Za-z](?=\s|$|[가-힣])/g, ' ');
+      // 6. ISO 8601 시간 형식 (12:34, 12:34:56) 제거
+      cleaned = cleaned.replace(/\b\d{1,2}:\d{2}(?::\d{2})?\b/g, '');
+      // 7. 연속된 공백 정리
       cleaned = cleaned.replace(/\s+/g, ' ').trim();
       return cleaned;
     }
 
     function screenPreRecord(idx) { recordView('pre', idx); }
     function screenPostRecord(idx) { recordView('post', idx); }
+
+    /* 사전·사후 질문에 대한 예시/힌트 */
+    function getRecordingHint(phase, idx) {
+      if (phase === 'pre') {
+        const hints = [
+          '💡 예: "연필이랑 자랑 있어요. 글씨 쓰는 거랑 줄 긋는 거로 나눌 수 있어요"',
+          '💡 예: "사자, 새, 물고기가 있어요. 다리 개수로 나눠봐요"',
+          '💡 자유롭게 생각나는 대로 말해보세요!'
+        ];
+        return hints[idx] || hints[2];
+      } else {
+        const hints = [
+          '💡 예: "쓰임새로 나눌 수도 있고, 색깔로도 나눌 수 있어요"',
+          '💡 예: "다리 수로 나누거나, 사는 곳으로도 나눌 수 있어요"',
+          '💡 두 가지 다른 기준으로 설명해 봐요!'
+        ];
+        return hints[idx] || hints[2];
+      }
+    }
 
     function recordView(phase, idx) {
       const questions = phase === 'pre' ? (STATE.data.preQuestions || []) : (STATE.data.postQuestions || []);
@@ -1431,34 +1556,32 @@
       const phaseLabel = phase === 'pre' ? '학습 전' : '학습 후';
       const phaseColor = phase === 'pre' ? '#F97316' : '#8B5CF6';
       const phaseEmoji = phase === 'pre' ? '🌱' : '🌟';
-      const phaseHelper = phase === 'pre' 
-        ? '🌱 아직 배우기 전이니까 <strong>편하게 아는 만큼</strong> 답해도 돼요! 😊'
-        : '🌟 오늘 배운 내용을 떠올리면서 <strong>멋지게 답해봐요!</strong> 💪';
+      const hint = getRecordingHint(phase, idx);
       
       showScreen(`
-        ${renderTutorial(`<span class="text-pink"><strong>🎤 ${phaseLabel} 말하기</strong></span> 🔴 빨간 버튼 누르고 → 🗣️ 자유롭게 말하고 → 다시 누르면 끝!`)}
-        <div style="flex:1; display:flex; align-items:center; justify-content:center; overflow-y:auto;">
+        ${renderTutorial(`<strong>🎤 ${phaseLabel} 말하기</strong> 빨간 버튼 누르고 말하기, 다시 눌러 끝내기!`)}
+        <div style="flex:1; display:flex; align-items:center; justify-content:center;">
           <div class="record-card">
-            <div style="display:inline-block; background:${phaseColor}; color:white; padding:10px 26px; border-radius:999px; font-family:var(--font-display); font-size:clamp(19px, 2.6vh, 23px); margin-bottom:16px;">
-              ${phaseEmoji} ${phaseLabel} 질문 ${idx + 1} / ${questions.length}
+            <div style="display:inline-block; background:${phaseColor}; color:white; padding:8px 22px; border-radius:999px; font-family:var(--font-display); font-size:clamp(17px, 2.3vh, 21px); margin-bottom:clamp(8px, 1.2vh, 14px);">
+              ${phaseEmoji} ${phaseLabel} ${idx + 1}/${questions.length}
             </div>
             <div class="record-question">💭 ${q.질문}</div>
-            <div style="background:#FFF5F5; border:3px solid #FBCFE8; border-radius:18px; padding:14px; margin-bottom:16px;">
-              <p style="font-family:var(--font-body); color:#9F1239; font-size:clamp(17px, 2.3vh, 20px); line-height:1.6;">
-                ${phaseHelper}
+            <div style="background:#FEF3C7; border:3px solid #FBBF24; border-radius:14px; padding:clamp(10px, 1.5vh, 14px); margin-bottom:clamp(10px, 1.5vh, 14px); text-align:left;">
+              <p style="color:#78350F; font-size:clamp(15px, 2vh, 19px); line-height:1.5;">
+                ${hint}
               </p>
             </div>
             <button id="record-btn" class="record-button" onclick="toggleRecording('${phase}', ${idx})">
               ${ICONS.mic}
             </button>
-            <div class="record-status" id="record-status">🎤 빨간 마이크 버튼을 콕! 눌러주세요 ✨</div>
+            <div class="record-status" id="record-status">🎤 빨간 버튼을 콕! 눌러주세요</div>
             <div class="transcript-box" id="transcript-box">
-              <span class="transcript-empty">✏️ 여기에 내가 한 말이 글로 나타나요... 😊</span>
+              <span class="transcript-empty">✏️ 여기에 내 말이 글로 나타나요</span>
             </div>
-            <div style="display:flex; gap:10px; margin-top:18px; justify-content:center; flex-wrap:wrap;">
+            <div style="display:flex; gap:8px; margin-top:clamp(10px, 1.5vh, 16px); justify-content:center; flex-wrap:wrap;">
               <button class="btn-secondary" onclick="skipRecording('${phase}', ${idx})">⏭️ 건너뛰기</button>
-              <button id="save-btn" class="btn-main" style="display:none; max-width:300px;" onclick="saveAndNext('${phase}', ${idx})">
-                💾 저장하고 계속하기 ${ICONS.arrow}
+              <button id="save-btn" class="btn-main" style="display:none; max-width:280px;" onclick="saveAndNext('${phase}', ${idx})">
+                💾 저장 ${ICONS.arrow}
               </button>
             </div>
           </div>
@@ -1534,8 +1657,8 @@
             }
             if (final) currentTranscript += cleanTranscript(final) + ' ';
             const cleanInterim = cleanTranscript(interim);
-            const display = currentTranscript + (cleanInterim ? ` <em style="color:#94A3B8;">${cleanInterim}</em>` : '');
-            transcriptBox.innerHTML = display.trim() || '<span class="transcript-empty">🎧 듣고 있어요... 천천히 말해주세요! 😊</span>';
+            const display = currentTranscript + (cleanInterim ? ` <span style="color:#94A3B8;">${cleanInterim}</span>` : '');
+            transcriptBox.innerHTML = display.trim() || '<span class="transcript-empty">🎧 듣고 있어요... 천천히 말해주세요</span>';
           };
           speechRecognition.onerror = (e) => console.log('STT:', e.error);
           try { speechRecognition.start(); } catch(e) {}
@@ -1609,9 +1732,9 @@
     function screenActivity1() {
       fixedSortActivity({
         number: 1,
-        title: '📦 학용품을 분류해 봐요',
-        criterionLabel: '쓰임새 / 종류',
-        tutorial: '<span class="text-purple">👆 학용품을 콕 누르고 끌어다가</span> 같은 종류 칸에 넣어주세요! 🤗',
+        title: '📦 학용품 분류',
+        criterionLabel: '쓰임새',
+        tutorial: '학용품을 <strong>콕!</strong> 누른 다음, 같은 종류 칸을 <strong>콕!</strong> 눌러요 ✨',
         items: STATE.data.activity1 || [],
         onComplete: () => screenActivity2()
       });
@@ -1620,9 +1743,9 @@
     function screenActivity2() {
       fixedSortActivity({
         number: 2,
-        title: '🦓 동물을 분류해 봐요',
+        title: '🦓 동물 분류',
         criterionLabel: '다리의 수',
-        tutorial: '<span class="text-blue">🦵 다리가 몇 개일까?</span> 0개(🐟), 2개(🐦), 4개(🐶)로 나눠봐요! 🌟',
+        tutorial: '<strong>다리가 몇 개?</strong> 0개·2개·4개로 나눠요! 동물을 콕! 누르고, 칸을 콕! 누르기 🌟',
         items: STATE.data.activity2 || [],
         onComplete: () => screenActivity3()
       });
@@ -1656,7 +1779,7 @@
         showScreen(`
           ${renderHeader({ number, title, criterionLabel, fixed: true })}
           ${renderTutorial(tutorial)}
-          ${renderFeedback('👆 왼쪽 친구를 콕! 눌러서 오른쪽 칸으로 끌어보세요 🎯', 'thinking')}
+          ${renderFeedback('👆 친구를 콕! 눌러서 골라보세요 ✨', 'thinking')}
           <div class="sort-main">
             <div class="item-tray" id="item-tray">
               <span class="tray-label">📦 분류할 친구들 (${activeItems.length}개)</span>
@@ -1815,8 +1938,7 @@
     // ================================================
     const PRESET_CRITERIA = {
       color: { label: '색깔', icon: '🎨', binLabels: { red: '빨강', blue: '파랑', yellow: '노랑', green: '초록' } },
-      shape: { label: '모양', icon: '🔷', binLabels: { circle: '동그라미', square: '네모', triangle: '세모' } },
-      size: { label: '크기', icon: '📏', binLabels: { big: '큰 것', small: '작은 것' } }
+      shape: { label: '모양', icon: '🔷', binLabels: { circle: '동그라미', square: '네모', triangle: '세모' } }
     };
     let a4State = null;
 
@@ -1839,26 +1961,23 @@
 
     function renderA4Setup() {
       const blocks = STATE.data.activity4Blocks || [];
-      const blocksPreview = blocks.map(b => BlockSvg(b, 44)).join('');
+      const blocksPreview = blocks.map(b => BlockSvg(b, 36)).join('');
       
       showScreen(`
         ${renderHeader({ number: 4, title: '🧱 내가 분류 기준을 정해요!', criterionLabel: null, fixed: false })}
-        ${renderTutorial(`이번엔 <span class="hi-pink text-purple"><strong>내가 분류 기준을 정해요!</strong></span> ① 기준 정하기 → ② 칸 이름 정하기 → ③ "분류 시작" 누르기 🚀${a4State.completedRounds > 0 ? ' 💜 <span class="hi-blue"><strong>기준이 다르면 결과도 다른지</strong></span> 살펴봐요!' : ''}`)}
-        <div style="flex:1; display:flex; flex-direction:column; gap:14px; overflow-y:auto; padding:4px;">
-          <div style="background:white; border:4px solid var(--c-primary-light); border-radius:22px; padding:14px; flex-shrink:0; box-shadow:0 4px 12px rgba(0,0,0,0.06);">
-            <div style="text-align:center; font-family:var(--font-display); font-size:clamp(19px, 2.6vh, 23px); color:var(--c-text); margin-bottom:8px;">🧱 분류할 블록 (${blocks.length}개) 👀</div>
-            <div style="display:flex; justify-content:center; gap:10px; flex-wrap:wrap;">${blocksPreview}</div>
+        ${renderTutorial(`<span class="hi-pink text-purple"><strong>내가 분류 기준을 정해요!</strong></span> ① 기준 → ② 칸 이름 → ③ 시작 🚀${a4State.completedRounds > 0 ? ' 💜 <span class="hi-blue"><strong>기준이 다르면 결과도 다른지</strong></span> 살펴봐요!' : ''}`)}
+        <div style="flex:1; display:flex; flex-direction:column; gap:clamp(6px, 1vh, 10px); min-height:0; overflow:hidden;">
+          <div style="background:white; border:3px solid var(--c-primary-light); border-radius:18px; padding:clamp(8px, 1.2vh, 12px); flex-shrink:0;">
+            <div style="text-align:center; font-family:var(--font-display); font-size:clamp(15px, 2vh, 19px); color:var(--c-text); margin-bottom:6px;">🧱 분류할 블록 (${blocks.length}개) 👀</div>
+            <div style="display:flex; justify-content:center; gap:6px; flex-wrap:wrap;">${blocksPreview}</div>
           </div>
           
-          <div class="setup-section" style="background:linear-gradient(180deg, #FFF5F5, white); border-color:#FBCFE8;">
-            <div class="setup-step-header">
+          <div class="setup-section" style="background:linear-gradient(180deg, #FFF5F5, white); border-color:#FBCFE8; padding:clamp(10px, 1.5vh, 16px);">
+            <div class="setup-step-header" style="margin-bottom:clamp(6px, 1vh, 10px);">
               <span class="setup-step-num" style="background:linear-gradient(135deg, #EC4899, #BE185D);">1</span>
-              <span class="setup-step-title">🎨 분류 기준을 정해요!</span>
+              <span class="setup-step-title">🎨 분류 기준</span>
             </div>
-            <p style="font-family:var(--font-body); font-size:clamp(16px, 2.2vh, 19px); color:var(--c-text); margin-bottom:14px; line-height:1.6;">
-              💭 <span class="hi-pink"><strong>어떤 점</strong></span>이 비슷한 블록끼리 모을지 정해보세요!
-            </p>
-            <div style="display:flex; align-items:center; gap:12px; background:white; border:3px solid #FBCFE8; border-radius:16px; padding:14px 18px; margin-bottom:14px;">
+            <div style="display:flex; align-items:center; gap:10px; background:white; border:3px solid #FBCFE8; border-radius:14px; padding:clamp(8px, 1.2vh, 12px) clamp(10px, 1.4vw, 14px); margin-bottom:clamp(6px, 1vh, 10px);">
               ${ICONS.edit}
               <input type="text" class="text-input" id="criterion-input" placeholder="✏️ 직접 써봐요! 예: 색깔" 
                 value="${a4State.criterion}" 
@@ -1867,7 +1986,7 @@
             </div>
             <div class="preset-chips">
               ${ICONS.wand}
-              <span style="font-family:var(--font-display); font-size:clamp(16px, 2.2vh, 19px); color:#9F1239;">또는 추천 골라보기 👇</span>
+              <span style="font-family:var(--font-display); font-size:clamp(13px, 1.8vh, 16px); color:#9F1239;">추천 👇</span>
               ${Object.entries(PRESET_CRITERIA).map(([key, cfg]) => `
                 <button class="preset-chip ${a4State.presetKey === key ? 'active' : ''}" 
                   data-key="${key}" onclick="applyPreset('${key}')">
@@ -1877,35 +1996,29 @@
             </div>
           </div>
           
-          <div class="setup-section" style="background:linear-gradient(180deg, #F0F9FF, white); border-color:#BAE6FD;">
-            <div class="setup-step-header">
+          <div class="setup-section" style="background:linear-gradient(180deg, #F0F9FF, white); border-color:#BAE6FD; padding:clamp(10px, 1.5vh, 16px);">
+            <div class="setup-step-header" style="margin-bottom:clamp(6px, 1vh, 10px);">
               <span class="setup-step-num" style="background:linear-gradient(135deg, #3B82F6, #1D4ED8);">2</span>
-              <span class="setup-step-title">📦 분류함 이름을 정해요!</span>
-              <div style="margin-left:auto; display:flex; gap:8px; align-items:center;">
-                <span style="font-family:var(--font-body); font-size:clamp(15px, 2vh, 18px); color:#0C4A6E;">자동:</span>
+              <span class="setup-step-title">📦 분류함 이름 (2개 이상)</span>
+              <div style="margin-left:auto; display:flex; gap:6px; align-items:center;">
+                <span style="font-family:var(--font-body); font-size:clamp(12px, 1.6vh, 15px); color:#0C4A6E;">자동:</span>
                 <button class="auto-toggle ${a4State.autoBins ? 'on' : 'off'}" onclick="toggleAutoBins()">
                   ${a4State.autoBins ? '✅ ON' : 'OFF'}
                 </button>
               </div>
             </div>
-            <p style="font-family:var(--font-body); font-size:clamp(16px, 2.2vh, 19px); color:var(--c-text); margin-bottom:14px; line-height:1.6;">
-              💭 어떤 이름의 칸을 만들지 적어보세요. <span class="hi-blue"><strong>2개 이상</strong></span>이면 시작할 수 있어요! 🎯
-            </p>
             <div class="bin-inputs" id="bin-inputs">
               ${a4State.bins.map((b, i) => `
                 <div class="bin-input-wrap">
-                  <span style="color:#3B82F6; font-family:var(--font-display); font-size:clamp(16px, 2.2vh, 19px); flex-shrink:0;">${i + 1}.</span>
+                  <span style="color:#3B82F6; font-family:var(--font-display); font-size:clamp(14px, 1.9vh, 17px); flex-shrink:0;">${i + 1}.</span>
                   <input type="text" placeholder="✏️ 적기" value="${b.label}" 
                     oninput="a4State.bins[${i}].label = this.value; if(a4State.autoBins){a4State.autoBins=false; const t=document.querySelector('.auto-toggle'); if(t){t.textContent='OFF'; t.classList.remove('on'); t.classList.add('off');}}">
                 </div>
               `).join('')}
             </div>
-            <p style="font-family:var(--font-body); font-size:clamp(15px, 2vh, 17px); color:#0369A1; margin-top:12px; line-height:1.5;">
-              💡 안 쓰는 칸은 비워둬도 괜찮아요! 추천을 누르면 자동으로 채워져요 ✨
-            </p>
           </div>
           
-          <button class="btn-main" onclick="startSorting()">🚀 분류 시작! ${ICONS.arrow}</button>
+          <button class="btn-main" onclick="startSorting()" style="flex-shrink:0;">🚀 분류 시작! ${ICONS.arrow}</button>
         </div>
       `);
     }
@@ -2019,20 +2132,40 @@
     }
 
     function handleA4Drop(block, binId, itemEl) {
-      a4State.activeBlocks = a4State.activeBlocks.filter(b => b.id !== block.id);
       const bin = a4State.bins.find(b => b.id === binId);
       if (!bin) return;
+      
+      // 추천 기준 사용 시 정답 검증
+      if (a4State.presetKey) {
+        const expectedValue = block[a4State.presetKey]; // color/shape
+        const expectedLabel = PRESET_CRITERIA[a4State.presetKey].binLabels[expectedValue];
+        if (bin.label !== expectedLabel) {
+          // 틀림!
+          const sadMsgs = [
+            `🤔 다른 칸이 더 어울려요! 잘 봐봐요 🔍`,
+            `😅 음~ 다시 한번 보고 옮겨봐요! 💪`,
+            `🧐 다른 곳도 살펴볼까요? 🔎`
+          ];
+          updateFeedback(sadMsgs[Math.floor(Math.random() * sadMsgs.length)], 'sad');
+          playSfx('wrong');
+          speak('다른 칸이 더 어울려요');
+          return;
+        }
+      }
+      
+      // 정답이거나 자유 분류
+      a4State.activeBlocks = a4State.activeBlocks.filter(b => b.id !== block.id);
       bin.items.push(block);
       const itemsContainer = document.getElementById('items-' + binId);
       const placed = document.createElement('div');
       placed.className = 'bin-item';
-      placed.innerHTML = BlockSvg({ 색깔: block.color, 모양: block.shape, 크기: block.size }, 44);
+      placed.innerHTML = BlockSvg({ 색깔: block.color, 모양: block.shape, 크기: block.size }, 40);
       itemsContainer.appendChild(placed);
       const countEl = document.getElementById('count-' + binId);
       if (countEl) countEl.textContent = `(${itemsContainer.children.length}개)`;
       itemEl.remove();
       renderA4Blocks();
-      const happyMsgs = ['👍 좋아요!', '🌟 잘했어요!', '✨ 멋져요!', '💕 굿!', '🎯 좋은데요?'];
+      const happyMsgs = ['👍 좋아요!', '🌟 잘했어요!', '✨ 멋져요!', '💕 굿!'];
       updateFeedback(happyMsgs[Math.floor(Math.random() * happyMsgs.length)], 'happy');
       playSfx('correct');
       
@@ -2041,19 +2174,16 @@
         STATE.scores.a4 = a4State.completedRounds;
         setTimeout(() => {
           const msg = a4State.completedRounds === 1
-            ? `🎉 '<strong>${a4State.criterion}</strong>' 기준으로 분류 완료! 다른 기준으로도 한번 해볼까요? 🌈`
-            : `🎊 또 다른 기준으로도 분류했어요! 정말 대단해요! 💯`;
+            ? `🎉 분류 완료! 다른 기준으로도 해볼까요?`
+            : `🎊 또 다른 기준으로도 분류했어요!`;
           updateFeedback(msg, 'happy');
           playSfx('success');
-          speak(`${a4State.criterion} 기준 분류 완료!`);
+          speak('분류 완료');
           fireConfetti();
           const tray = document.getElementById('block-tray');
           tray.innerHTML = `
             <div style="display:flex; flex-direction:column; gap:14px; align-items:center; padding:12px;">
-              <p style="font-family:var(--font-display); font-size:clamp(19px, 2.6vh, 23px); color:var(--c-text); text-align:center; margin-bottom:6px; line-height:1.5;">
-                ${a4State.completedRounds === 1 ? '👇 다른 기준으로도 한번 해볼까요? 🤩' : '👇 마무리하거나 더 도전해도 돼요! 💪'}
-              </p>
-              <button class="btn-secondary" onclick="screenActivity4()">${ICONS.retry} 🎨 다른 기준으로 다시</button>
+              <button class="btn-secondary" onclick="screenActivity4()">${ICONS.retry} 다른 기준으로 다시</button>
               ${a4State.completedRounds >= 1 ? `
                 <button class="btn-main" style="max-width:340px;" onclick="onActivity4Complete()">
                   🎈 마무리하기 ${ICONS.arrow}
@@ -2077,22 +2207,21 @@
       let rating = 0;
       function render() {
         showScreen(`
-          ${renderTutorial('<span class="text-pink"><strong>✨ 오늘 활동이 어땠나요?</strong></span> 별을 콕! 눌러서 자기평가해 봐요 ⭐')}
-          <div style="flex:1; display:flex; align-items:center; justify-content:center; overflow-y:auto;">
+          ${renderTutorial('<strong>오늘 활동이 어땠나요?</strong> 별을 콕! 눌러주세요')}
+          <div style="flex:1; display:flex; align-items:center; justify-content:center;">
             <div class="record-card">
-              <div style="font-size:90px; line-height:1;">🌟✨</div>
-              <h1 class="intro-title">자기 평가 시간! 💖</h1>
-              <p class="intro-subtitle">
-                오늘 분류 활동을<br/>
-                <span class="hi-yellow">얼마나 잘했나요?</span> 😊
+              <div style="font-size:clamp(60px, 9vh, 90px); line-height:1;">🌟</div>
+              <h1 class="intro-title">자기 평가</h1>
+              <p class="intro-subtitle" style="margin-bottom:clamp(10px, 1.5vh, 16px);">
+                얼마나 잘했나요? 😊
               </p>
               <div class="stars-container" id="stars">
                 ${[1,2,3,4,5].map(n => `
-                  <button class="star-btn ${n <= rating ? 'filled' : ''}" data-rating="${n}" onclick="setRating(${n})" style="color:${n <= rating ? '#FBBF24' : '#CBD5E1'};">⭐</button>
+                  <button class="star-btn ${n <= rating ? 'filled' : ''}" data-rating="${n}" onclick="setRating(${n})">⭐</button>
                 `).join('')}
               </div>
-              <div id="rating-text" style="font-family:var(--font-display); font-size:clamp(22px, 3vh, 27px); color:var(--c-text); min-height:50px; margin-bottom:22px; line-height:1.5;">
-                👆 별을 눌러주세요! 💫
+              <div id="rating-text" style="font-family:var(--font-display); font-size:clamp(18px, 2.5vh, 24px); color:var(--c-text); min-height:clamp(40px, 6vh, 60px); margin-bottom:clamp(12px, 1.8vh, 18px); line-height:1.4;">
+                👆 별을 눌러주세요!
               </div>
               <button class="btn-main" id="rating-submit" disabled onclick="submitRating()">
                 ✅ 제출하기 ${ICONS.arrow}
@@ -2113,16 +2242,15 @@
         document.querySelectorAll('.star-btn').forEach(btn => {
           const v = parseInt(btn.dataset.rating);
           btn.classList.toggle('filled', v <= n);
-          btn.style.color = v <= n ? '#FBBF24' : '#CBD5E1';
         });
         const texts = ['', 
-          '😢 많이 어려웠어요...',
+          '😢 많이 어려웠어요',
           '😕 조금 어려웠어요',
-          '🙂 그럭저럭 괜찮았어요',
+          '🙂 괜찮았어요',
           '😊 잘했어요!',
-          '🎉 정말 잘했어요! 최고!'
+          '🎉 정말 잘했어요!'
         ];
-        document.getElementById('rating-text').innerHTML = `⭐ ${n}개<br/>${texts[n]}`;
+        document.getElementById('rating-text').innerHTML = `⭐ ${n}개 - ${texts[n]}`;
         document.getElementById('rating-submit').disabled = false;
       };
       window.submitRating = async () => {
@@ -2153,23 +2281,21 @@
 
     function screenRetryOption() {
       showScreen(`
-        <div style="flex:1; display:flex; align-items:center; justify-content:center; overflow-y:auto;">
+        <div style="flex:1; display:flex; align-items:center; justify-content:center;">
           <div class="record-card">
-            <div style="font-size:90px; line-height:1;">💪🌟</div>
+            <div style="font-size:clamp(60px, 9vh, 90px); line-height:1;">💪🌟</div>
             <h1 class="intro-title">한번 더 도전해볼까요? 💕</h1>
-            <p class="intro-subtitle">
+            <p class="intro-subtitle" style="margin-bottom:clamp(12px, 1.8vh, 18px);">
               별이 3개 이하예요!<br/>
-              <span class="hi-pink"><strong>다시 해보면</strong></span><br/>
-              훨씬 잘할 수 있어요! 🎯
+              <span class="hi-pink"><strong>다시 해보면</strong></span> 잘할 수 있어요! 🎯
             </p>
-            <div style="background:#FFFBEB; border:4px solid #FCD34D; border-radius:20px; padding:18px; margin-bottom:24px;">
-              <p style="font-family:var(--font-body); color:#78350F; font-size:clamp(17px, 2.3vh, 20px); line-height:1.7;">
+            <div style="background:#FFFBEB; border:3px solid #FCD34D; border-radius:18px; padding:clamp(10px, 1.5vh, 16px); margin-bottom:clamp(14px, 2vh, 20px);">
+              <p style="font-family:var(--font-body); color:#78350F; font-size:clamp(15px, 2vh, 19px); line-height:1.6;">
                 💡 처음에는 어려워도 괜찮아요!<br/>
-                🌱 다시 해보면 더 잘할 수 있어요!<br/>
-                ✨ 우리 한번 더 해봐요!
+                🌱 다시 해보면 더 잘할 수 있어요!
               </p>
             </div>
-            <div style="display:flex; gap:12px; flex-direction:column;">
+            <div style="display:flex; gap:10px; flex-direction:column;">
               <button class="btn-main" onclick="retryActivities()">💪 네! 다시 도전할래요!</button>
               <button class="btn-secondary" onclick="screenStamp()">🏁 아니요, 끝낼래요</button>
             </div>
@@ -2192,35 +2318,35 @@
       fireConfetti();
       playSfx('success');
       showScreen(`
-        <div style="flex:1; display:flex; align-items:center; justify-content:center; overflow-y:auto;">
+        <div style="flex:1; display:flex; align-items:center; justify-content:center;">
           <div class="stamp-card">
-            <div style="color:#FBBF24; line-height:1;">${ICONS.trophy}</div>
-            <h1 class="intro-title" style="margin-top:12px;">🏆 분류 탐구 마스터! 🏆</h1>
-            <p class="intro-subtitle">
+            <div style="color:#FBBF24; line-height:1; font-size:clamp(40px, 6vh, 60px);">${ICONS.trophy}</div>
+            <h1 class="intro-title" style="margin-top:clamp(6px, 1vh, 12px);">🏆 분류 마스터! 🏆</h1>
+            <p class="intro-subtitle" style="margin-bottom:clamp(8px, 1.2vh, 14px);">
               <span class="text-pink"><strong>${STATE.studentName}</strong></span> 친구가<br/>
-              오늘의 모험을 <span class="hi-yellow"><strong>멋지게</strong></span> 마쳤어요! 🎉🎊
+              <span class="hi-yellow"><strong>멋지게</strong></span> 마쳤어요! 🎊
             </p>
             <div class="stamp-circle">
               <div class="stamp-inner">
                 <span class="stamp-inner-text">참 잘했어요!</span>
                 <span class="stamp-inner-emoji">🏆</span>
-                <span class="stamp-inner-text" style="font-size:0.7em; opacity:0.5; letter-spacing:2px;">MASTER</span>
+                <span class="stamp-inner-text" style="font-size:0.7em; opacity:0.5;">MASTER</span>
               </div>
             </div>
-            <div style="background:linear-gradient(180deg, #F0F9FF, #FAF5FF); border:4px solid #BAE6FD; border-radius:22px; padding:18px; margin-bottom:22px; text-align:left;">
-              <div style="font-family:var(--font-display); font-size:clamp(21px, 2.8vh, 25px); color:#0C4A6E; margin-bottom:12px; text-align:center;">
-                📊 오늘의 학습 결과 ✨
+            <div style="background:linear-gradient(180deg, #F0F9FF, #FAF5FF); border:3px solid #BAE6FD; border-radius:18px; padding:clamp(10px, 1.5vh, 16px); margin-bottom:clamp(12px, 1.8vh, 18px); text-align:left;">
+              <div style="font-family:var(--font-display); font-size:clamp(17px, 2.3vh, 22px); color:#0C4A6E; margin-bottom:clamp(6px, 1vh, 10px); text-align:center;">
+                📊 학습 결과 ✨
               </div>
-              <div style="font-family:var(--font-body); font-size:clamp(17px, 2.3vh, 20px); color:var(--c-text); line-height:2;">
-                <div>📦 학용품 분류: <strong class="text-orange">${STATE.scores.a1}점</strong></div>
-                <div>🦓 동물 분류: <strong class="text-pink">${STATE.scores.a2}점</strong></div>
-                <div>🎯 기준 찾기: <strong class="text-green">${STATE.scores.a3}점</strong></div>
-                <div>🧱 자유 분류: <strong class="text-purple">${STATE.scores.a4}회 완료</strong></div>
-                <div>⭐ 자기평가: <strong style="color:#F59E0B;">${'⭐'.repeat(STATE.selfRating)}</strong></div>
+              <div style="font-family:var(--font-body); font-size:clamp(14px, 1.9vh, 18px); color:var(--c-text); line-height:1.6;">
+                📦 학용품: <strong class="text-orange">${STATE.scores.a1}점</strong> ·
+                🦓 동물: <strong class="text-pink">${STATE.scores.a2}점</strong> ·
+                🎯 기준: <strong class="text-green">${STATE.scores.a3}점</strong><br/>
+                🧱 자유: <strong class="text-purple">${STATE.scores.a4}회</strong> ·
+                ⭐ 평가: <strong style="color:#F59E0B;">${'⭐'.repeat(STATE.selfRating)}</strong>
               </div>
             </div>
-            <button class="btn-main" onclick="downloadStamp()">💾 임명장 저장하기 ✨</button>
-            <button class="btn-secondary" style="margin-top:10px;" onclick="location.reload()">🏠 처음으로 돌아가기</button>
+            <button class="btn-main" onclick="downloadStamp()">💾 임명장 저장 ✨</button>
+            <button class="btn-secondary" style="margin-top:8px;" onclick="location.reload()">🏠 처음으로</button>
           </div>
         </div>
       `);
@@ -2270,11 +2396,11 @@
       document.getElementById('app').innerHTML = `
         <div class="screen" style="align-items:center; justify-content:center;">
           <div style="text-align:center;">
-            <div style="font-size:110px; animation: spin 2s linear infinite; display:inline-block; line-height:1;">🔍</div>
-            <div style="font-family:var(--font-display); font-size:clamp(28px, 4vh, 36px); color:var(--c-primary-dark); margin-top:24px;">
-              🌈 분류 박물관 준비 중... 🌈
+            <div style="font-size:clamp(60px, 9vh, 90px); animation: spin 2s linear infinite; display:inline-block; line-height:1;">🔍</div>
+            <div style="font-family:var(--font-display); font-size:clamp(20px, 3vh, 28px); color:var(--c-primary-dark); margin-top:16px;">
+              🌈 분류 박물관 준비 중...
             </div>
-            <div style="font-family:var(--font-body); font-size:clamp(18px, 2.4vh, 22px); color:var(--c-text-light); margin-top:14px;">
+            <div style="font-family:var(--font-body); font-size:clamp(14px, 1.9vh, 18px); color:var(--c-text-light); margin-top:8px;">
               ✨ 잠시만 기다려 주세요 ✨
             </div>
           </div>
