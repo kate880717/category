@@ -158,16 +158,16 @@
       position: absolute; inset: 0;
       width: 100%; height: 100%;
       display: flex; flex-direction: column;
-      padding: clamp(4px, 1vh, 12px) clamp(4px, 1vw, 12px);
-      gap: clamp(4px, 1vh, 12px);
+      padding: clamp(4px, 0.8vh, 10px) clamp(4px, 0.8vw, 10px);
+      gap: clamp(4px, 0.8vh, 10px);
       overflow: hidden !important;
     }
     .screen > * { max-width: 100%; min-width: 0; }
     
     /* 가로 화면에서 패딩 더 작게 (높이 부족 보정) */
     html.landscape.small-screen .screen {
-      padding: clamp(2px, 0.6vh, 8px) clamp(4px, 1vw, 12px);
-      gap: clamp(2px, 0.6vh, 8px);
+      padding: clamp(2px, 0.5vh, 6px) clamp(4px, 0.8vw, 10px);
+      gap: clamp(2px, 0.5vh, 6px);
     }
 
     /* 인트로 카드 - 화면 꽉 차게 */
@@ -175,8 +175,9 @@
       background: white;
       border-radius: clamp(16px, 2.5vw, 36px);
       padding: clamp(14px, 2.5vh, 32px) clamp(18px, 3vw, 44px);
-      width: 100%;
-      max-width: min(820px, 96vw);
+      width: calc(100% - 16px);
+      max-width: min(1000px, calc(100vw - 16px));
+      height: auto;
       max-height: calc(var(--vh, 100vh) - 16px);
       text-align: center;
       box-shadow: 0 20px 50px rgba(99, 102, 241, 0.15), 0 0 0 6px rgba(199, 210, 254, 0.4);
@@ -192,7 +193,7 @@
     }
     /* 세로 화면 - 카드 가로 거의 다 차지 */
     html.portrait .intro-card {
-      max-width: 96vw;
+      max-width: calc(100vw - 12px);
     }
     .intro-card::before {
       content: '';
@@ -444,15 +445,30 @@
       flex-shrink: 0;
       min-height: clamp(60px, 8vh, 80px);
     }
+    .feedback-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
     .feedback-text {
       font-family: var(--font-display);
       font-size: clamp(30px, 3.9vh, 39px);
-      line-height: 1.3;
+      line-height: 1.2;
       word-break: keep-all;
     }
     .feedback-text.happy { color: var(--c-primary); }
     .feedback-text.sad { color: var(--c-accent-pink); }
     .feedback-text.thinking { color: var(--c-text); }
+    /* 보조 안내 - 작게, 흐리게 */
+    .feedback-sub {
+      font-family: var(--font-display);
+      font-size: clamp(16px, 2vh, 20px);
+      color: var(--c-text-light);
+      line-height: 1.3;
+      word-break: keep-all;
+      opacity: 0.8;
+    }
 
     /* 메인 분류 */
     .sort-main {
@@ -771,9 +787,9 @@
       background: linear-gradient(180deg, white, #FAF5FF);
       border-radius: clamp(16px, 2.5vh, 28px);
       padding: clamp(12px, 2vh, 22px) clamp(16px, 2.5vw, 30px);
-      max-width: min(720px, 96vw);
+      width: calc(100% - 16px);
+      max-width: min(1000px, calc(100vw - 16px));
       max-height: calc(var(--vh, 100vh) - 16px);
-      width: 100%;
       box-shadow: 0 16px 40px rgba(99, 102, 241, 0.15);
       text-align: center;
       border: 4px solid white;
@@ -788,7 +804,7 @@
     }
     /* 세로 화면 - 카드 가로 다 차지 */
     html.portrait .record-card {
-      max-width: 96vw;
+      max-width: calc(100vw - 12px);
     }
     .record-question {
       font-family: var(--font-display);
@@ -879,9 +895,9 @@
       background: white;
       border-radius: clamp(24px, 4vw, 48px);
       padding: clamp(14px, 2.5vh, 36px) clamp(18px, 3vw, 40px);
-      max-width: min(640px, 96vw);
+      width: calc(100% - 16px);
+      max-width: min(900px, calc(100vw - 16px));
       max-height: calc(var(--vh, 100vh) - 16px);
-      width: 100%;
       text-align: center;
       box-shadow: 0 20px 50px rgba(99, 102, 241, 0.2), 0 0 0 12px rgba(199, 210, 254, 0.4);
       position: relative;
@@ -890,7 +906,7 @@
       justify-content: center;
       overflow: hidden;
     }
-    html.portrait .stamp-card { max-width: 96vw; }
+    html.portrait .stamp-card { max-width: calc(100vw - 12px); }
     .stamp-circle {
       display: inline-block;
       border: 6px dashed var(--c-primary-light);
@@ -1123,23 +1139,88 @@
       if (STATE.speakerOn) speak("소리가 켜졌어요!");
     }
 
-    function speak(text, rate = 0.95, pitch = 1.1) {
+    // 한국어 여성 음성 우선순위 리스트 (브라우저별)
+    const KOREAN_FEMALE_VOICES = [
+      'Yuna',                      // iOS/macOS Korean
+      'Google 한국의',              // Android Chrome
+      'Microsoft Heami',            // Windows Edge
+      'Microsoft SunHi',            // Windows
+      'Korean (South Korea)',
+      'ko-KR-Standard-A',           // Google Cloud
+      'ko-KR-Wavenet-A',
+    ];
+    
+    let cachedKoreanVoice = null;
+    
+    function pickKoreanVoice() {
+      if (cachedKoreanVoice) return cachedKoreanVoice;
+      const voices = window.speechSynthesis.getVoices();
+      if (!voices || voices.length === 0) return null;
+      
+      // 1순위: 우선순위 리스트의 음성
+      for (const name of KOREAN_FEMALE_VOICES) {
+        const found = voices.find(v => v.name.includes(name) || v.voiceURI.includes(name));
+        if (found) { cachedKoreanVoice = found; return found; }
+      }
+      // 2순위: ko-KR + 여성 키워드(female, woman) 포함
+      let voice = voices.find(v => v.lang === 'ko-KR' && /female|woman|여/i.test(v.name));
+      if (voice) { cachedKoreanVoice = voice; return voice; }
+      // 3순위: Google ko-KR
+      voice = voices.find(v => v.lang === 'ko-KR' && v.name.toLowerCase().includes('google'));
+      if (voice) { cachedKoreanVoice = voice; return voice; }
+      // 4순위: 아무 ko-KR
+      voice = voices.find(v => v.lang === 'ko-KR' || v.lang.startsWith('ko'));
+      if (voice) { cachedKoreanVoice = voice; return voice; }
+      return null;
+    }
+    
+    // 음성 목록을 미리 로드 (브라우저가 비동기로 로드함)
+    if (window.speechSynthesis) {
+      window.speechSynthesis.getVoices(); // 초기 로드 트리거
+      window.speechSynthesis.addEventListener('voiceschanged', () => {
+        cachedKoreanVoice = null; // 캐시 무효화
+        pickKoreanVoice();
+      });
+    }
+
+    /**
+     * 유치원 선생님처럼 따뜻하고 또렷하게 말함
+     * - rate 0.92: 약간 천천히 (저학년이 알아듣기 쉽게)
+     * - pitch 1.15: 약간 높게 (친근하고 따뜻한 느낌)
+     */
+    function speak(text, rate = 0.92, pitch = 1.15) {
       if (!STATE.speakerOn) return;
       if (!window.speechSynthesis || !text) return;
+      
       const synth = window.speechSynthesis;
-      if (synth.speaking) synth.cancel();
-      const u = new SpeechSynthesisUtterance(text);
-      const setVoice = () => {
-        const voices = synth.getVoices();
-        let voice = voices.find(v => v.lang === 'ko-KR' && v.name.includes('Google'));
-        if (!voice) voice = voices.find(v => v.lang === 'ko-KR');
-        if (voice) u.voice = voice;
-      };
-      if (synth.getVoices().length === 0) {
-        window.speechSynthesis.onvoiceschanged = setVoice;
-      } else { setVoice(); }
-      u.rate = rate; u.pitch = pitch; u.lang = 'ko-KR';
-      synth.speak(u);
+      // 진행 중인 음성 멈춤
+      if (synth.speaking || synth.pending) synth.cancel();
+      
+      // 텍스트 정제 - 이모지 제거 (음성으로 읽으면 어색)
+      const cleanText = String(text)
+        .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, '')
+        .replace(/[!?.,]+/g, '$&')
+        .replace(/\s+/g, ' ')
+        .trim();
+      if (!cleanText) return;
+      
+      const u = new SpeechSynthesisUtterance(cleanText);
+      const voice = pickKoreanVoice();
+      if (voice) u.voice = voice;
+      u.rate = rate;
+      u.pitch = pitch;
+      u.volume = 1.0;
+      u.lang = 'ko-KR';
+      
+      // 살짝 지연 후 재생 (이전 cancel이 완료되도록)
+      setTimeout(() => {
+        try { synth.speak(u); } catch(e) { console.warn('TTS error:', e); }
+      }, 50);
+    }
+    
+    // 천천히 또박또박 (중요한 안내용)
+    function speakSlow(text) {
+      speak(text, 0.85, 1.18);
     }
 
     let audioCtx = null;
@@ -1335,19 +1416,25 @@
       `;
     }
 
-    function renderFeedback(text, mood = 'thinking') {
+    function renderFeedback(mainText, mood = 'thinking', subText = '') {
       return `
         <div class="feedback-area" id="feedback-area">
           ${FairySvg(mood, 44)}
-          <p class="feedback-text ${mood}">${text}</p>
+          <div class="feedback-content">
+            <p class="feedback-text ${mood}" id="feedback-main">${mainText}</p>
+            ${subText ? `<p class="feedback-sub" id="feedback-sub">${subText}</p>` : ''}
+          </div>
         </div>
       `;
     }
 
-    function updateFeedback(text, mood = 'thinking') {
+    function updateFeedback(mainText, mood = 'thinking', subText = '') {
       const area = document.getElementById('feedback-area');
       if (!area) return;
-      area.innerHTML = `${FairySvg(mood, 44)}<p class="feedback-text ${mood}">${text}</p>`;
+      area.innerHTML = `${FairySvg(mood, 44)}<div class="feedback-content">
+        <p class="feedback-text ${mood}">${mainText}</p>
+        ${subText ? `<p class="feedback-sub">${subText}</p>` : ''}
+      </div>`;
     }
 
     function showModal(html) {
@@ -1364,6 +1451,24 @@
 
     function showScreen(html) {
       document.getElementById('app').innerHTML = `<div class="screen">${html}</div>`;
+      // 화면 전환 시 진행 중인 음성 멈춤
+      if (window.speechSynthesis) window.speechSynthesis.cancel();
+    }
+    
+    /**
+     * 화면이 그려진 후 안내 음성을 자동 재생
+     * - 튜토리얼 텍스트 + 메인 안내문 읽어줌
+     */
+    function autoReadScreen(text) {
+      if (!STATE.speakerOn) return;
+      // 화면 그려진 후 약간 지연 후 읽음 (애니메이션 시작 후)
+      setTimeout(() => {
+        // HTML 태그 제거하고 텍스트만 추출
+        const div = document.createElement('div');
+        div.innerHTML = text;
+        const cleanText = div.textContent || div.innerText || '';
+        speakSlow(cleanText);
+      }, 400);
     }
 
     function shuffle(arr) {
@@ -1487,7 +1592,22 @@
         bin.classList.add('click-target');
         bin.addEventListener('click', binClickHandler);
       });
-      updateFeedback('👆 이제 <strong>분류함</strong>을 콕! 눌러봐요 ✨', 'thinking');
+      // 활동의 탐구 질문이 있으면 메인으로 표시 (큰 글씨)
+      const inquiry = window.CURRENT_INQUIRY_QUESTION;
+      const itemName = element.querySelector('.item-name')?.textContent || '';
+      if (inquiry) {
+        // 탐구 질문 + 아이템 이름 → 큰 글씨
+        const mainMsg = itemName ? `${inquiry.replace('🤔', '🤔 <span class="hi-yellow">' + itemName + '</span>은(는)')}` : inquiry;
+        updateFeedback(mainMsg, 'thinking', '👆 알맞은 분류함을 콕! 눌러봐요');
+        // 음성으로도 안내
+        if (itemName) {
+          speak(`${itemName}은요? ${inquiry.replace(/🤔|❓/g, '')}`);
+        } else {
+          speak(inquiry.replace(/🤔|❓/g, ''));
+        }
+      } else {
+        updateFeedback('👆 분류함을 콕! 눌러봐요', 'thinking');
+      }
     }
     
     function binClickHandler(e) {
@@ -1517,7 +1637,7 @@
     // ================================================
     function screenIntro() {
       showScreen(`
-        <div style="flex:1; display:flex; align-items:center; justify-content:center;">
+        <div style="flex:1; display:flex; align-items:center; justify-content:center; width:100%;">
           <div class="intro-card">
             ${FairySvg('happy', 100)}
             <h1 class="intro-title">🔍 창의 분류 박물관</h1>
@@ -1539,6 +1659,7 @@
           </div>
         </div>
       `);
+      autoReadScreen('안녕! 친구들. 분류하기를 배워봐요. 시작 버튼을 눌러주세요.');
     }
     
     /* 마이크 권한 요청 (사전·사후 녹음용) */
@@ -1577,8 +1698,8 @@
       
       showScreen(`
         ${renderTutorial('<strong>내 이름</strong>을 골라주세요!')}
-        <div style="flex:1; display:flex; align-items:center; justify-content:center;">
-          <div class="record-card" style="max-width:min(520px, 92vw);">
+        <div style="flex:1; display:flex; align-items:center; justify-content:center; width:100%;">
+          <div class="record-card">
             <div style="font-size:clamp(70px, 10vh, 100px); line-height:1;">🎒</div>
             <h1 class="intro-title" style="margin:clamp(8px, 1.5vh, 14px) 0;">누구인가요?</h1>
             
@@ -1613,6 +1734,8 @@
           <p class="modal-body">선생님께 알려주세요!</p>
           <button class="btn-secondary" onclick="closeModal()">알겠어요</button>
         `);
+      } else {
+        autoReadScreen('누구인가요? 내 이름을 골라주세요.');
       }
     }
     
@@ -1642,7 +1765,7 @@
 
     function screenWelcomeTutorial() {
       showScreen(`
-        <div style="flex:1; display:flex; align-items:center; justify-content:center;">
+        <div style="flex:1; display:flex; align-items:center; justify-content:center; width:100%;">
           <div class="intro-card">
             <div style="font-size:clamp(60px, 9vh, 90px); line-height:1;">👋😊</div>
             <h1 class="intro-title"><span class="text-pink">${STATE.studentName}</span> 친구!<br/>반가워요 💕</h1>
@@ -1661,6 +1784,7 @@
           </div>
         </div>
       `);
+      autoReadScreen(`${STATE.studentName} 친구! 반가워요. 분류를 배워봐요. 천천히 차근차근! 틀려도 괜찮아요.`);
     }
 
     // ================================================
@@ -1732,7 +1856,7 @@
       
       showScreen(`
         ${renderTutorial(`<strong>🎤 ${phaseLabel} 말하기</strong> 빨간 버튼 누르고 말하기, 다시 눌러 끝내기!`)}
-        <div style="flex:1; display:flex; align-items:center; justify-content:center;">
+        <div style="flex:1; display:flex; align-items:center; justify-content:center; width:100%;">
           <div class="record-card">
             <div style="display:inline-block; background:${phaseColor}; color:white; padding:8px 22px; border-radius:999px; font-family:var(--font-display); font-size: clamp(25px, 3.0vh, 29px); margin-bottom:clamp(8px, 1.2vh, 14px);">
               ${phaseEmoji} ${phaseLabel} ${idx + 1}/${questions.length}
@@ -1764,7 +1888,8 @@
           </button>
         </div>
       `);
-      speak(q.질문);
+      // 질문 + 안내 음성 자동 재생
+      autoReadScreen(`${q.질문} 빨간 버튼을 누르고 말해보세요.`);
     }
 
     async function toggleRecording(phase, idx) {
@@ -1906,6 +2031,7 @@
         number: 1,
         title: '📦 학용품 분류',
         criterionLabel: '쓰임새',
+        inquiryQuestion: '🤔 이 학용품은 어디에 쓰일까요?',
         tutorial: '학용품을 <strong>콕!</strong> 누른 다음, 같은 종류 칸을 <strong>콕!</strong> 눌러요 ✨',
         items: STATE.data.activity1 || [],
         onComplete: () => screenActivity2()
@@ -1917,13 +2043,14 @@
         number: 2,
         title: '🦓 동물 분류',
         criterionLabel: '다리의 수',
+        inquiryQuestion: '🤔 다리가 몇 개일까요?',
         tutorial: '<strong>다리가 몇 개?</strong> 0개·2개·4개로 나눠요! 동물을 콕! 누르고, 칸을 콕! 누르기 🌟',
         items: STATE.data.activity2 || [],
         onComplete: () => screenActivity3()
       });
     }
 
-    function fixedSortActivity({ number, title, criterionLabel, tutorial, items, onComplete }) {
+    function fixedSortActivity({ number, title, criterionLabel, inquiryQuestion, tutorial, items, onComplete }) {
       const seen = new Set();
       const bins = [];
       items.forEach(it => {
@@ -1947,11 +2074,18 @@
       let correctCount = 0;
       const totalCount = activeItems.length;
       
+      // 탐구 질문 전역 저장 (handleItemClick에서 사용)
+      window.CURRENT_INQUIRY_QUESTION = inquiryQuestion;
+      
       function render() {
         showScreen(`
           ${renderHeader({ number, title, criterionLabel, fixed: true })}
           ${renderTutorial(tutorial)}
-          ${renderFeedback('👆 친구를 콕! 눌러서 골라보세요 ✨', 'thinking')}
+          ${renderFeedback(
+            inquiryQuestion || '👆 친구를 골라보세요',
+            'thinking',
+            '👆 분류할 친구를 콕! 눌러주세요'
+          )}
           <div class="sort-main">
             <div class="item-tray" id="item-tray">
               <span class="tray-label">📦 분류할 친구들 (${activeItems.length}개)</span>
@@ -1971,6 +2105,9 @@
           </div>
         `);
         renderItems();
+        // 활동 시작 시 탐구 질문을 음성으로 안내
+        const cleanInquiry = (inquiryQuestion || '').replace(/[🤔❓!?]/g, '').trim();
+        autoReadScreen(cleanInquiry || '친구를 골라서 알맞은 칸에 넣어주세요');
       }
       
       function renderItems() {
@@ -2002,10 +2139,10 @@
           itemEl.remove();
           renderItems();
           const happyMsgs = [
-            `🎉 와! ${item.name} 정답이에요! 멋져요! ✨`,
-            `👍 ${item.name} 딩동댕! 잘했어요! 💕`,
-            `🌟 ${item.name} 정확해요! 최고예요! 🏆`,
-            `💖 ${item.name} 맞았어요! 천재! 🤗`
+            `🎉 와! ${item.name} 정답이에요!`,
+            `👍 ${item.name} 딩동댕!`,
+            `🌟 ${item.name} 정확해요!`,
+            `💖 ${item.name} 맞았어요!`
           ];
           updateFeedback(happyMsgs[Math.floor(Math.random() * happyMsgs.length)], 'happy');
           playSfx('correct');
@@ -2013,7 +2150,7 @@
           
           if (activeItems.length === 0) {
             setTimeout(() => {
-              updateFeedback('🎊 짝짝짝! 모두 잘 분류했어요! 정말 대단해요! 🎉', 'happy');
+              updateFeedback('🎊 모두 잘 분류했어요! 대단해요! 🎉', 'happy');
               playSfx('success');
               speak('와! 모두 잘 분류했어요!');
               fireConfetti();
@@ -2026,14 +2163,29 @@
                 </button>
               `;
             }, 600);
+          } else {
+            // 1.5초 후 다시 탐구 질문 안내
+            setTimeout(() => {
+              if (activeItems.length > 0) {
+                updateFeedback(
+                  inquiryQuestion || '👆 다음 친구를 골라봐요',
+                  'thinking',
+                  '👆 다음 친구를 콕! 눌러주세요'
+                );
+              }
+            }, 1500);
           }
         } else {
           const sadMsgs = [
-            `🤔 ${item.name}은(는) 다른 곳이 더 어울려요! 다시 봐봐요 🔍`,
-            `😅 어? ${item.name}은(는) 여기가 아닐 수도! 한번 더! 💪`,
-            `🧐 ${item.name}, 잘 보고 다른 칸도 살펴볼까요? 🔎`
+            `🤔 ${item.name}은(는) 다른 곳이 어울려요`,
+            `😅 ${item.name}은(는) 다시 한번 봐요`,
+            `🧐 ${item.name}, 다른 칸도 살펴볼까요?`
           ];
-          updateFeedback(sadMsgs[Math.floor(Math.random() * sadMsgs.length)], 'sad');
+          updateFeedback(
+            sadMsgs[Math.floor(Math.random() * sadMsgs.length)],
+            'sad',
+            inquiryQuestion ? `${inquiryQuestion.replace(/🤔/, '💭')} 잘 생각해봐요` : ''
+          );
           playSfx('wrong');
           speak(`${item.name}은 다른 곳이 더 어울려요`);
         }
@@ -2078,6 +2230,7 @@
             <button class="btn-main" onclick="screenActivity4()">🎈 다음 활동으로 가요! ${ICONS.arrow}</button>
           </div>
         `);
+        autoReadScreen('이 블록들을 어떻게 나눌까요? 누가 봐도 똑같이 나눌 수 있는 기준을 모두 찾아주세요.');
       }
       
       window.handleChoice = (optId) => {
@@ -2193,6 +2346,11 @@
           <button class="btn-main" onclick="startSorting()" style="flex-shrink:0;">🚀 분류 시작! ${ICONS.arrow}</button>
         </div>
       `);
+      if (a4State.completedRounds === 0) {
+        autoReadScreen('내가 분류 기준을 정해요. 어떤 점이 비슷한 블록끼리 모을지 정해보세요.');
+      } else {
+        autoReadScreen('다른 기준으로 다시 해볼까요? 기준이 다르면 결과도 달라져요.');
+      }
     }
 
     function applyPreset(key) {
@@ -2264,10 +2422,18 @@
       a4State.bins.forEach(b => b.items = []);
       const binColors = ['rose', 'emerald', 'amber', 'sky', 'violet', 'orange'];
       
+      // 탐구 질문 - 사용자가 정한 기준 사용
+      const inquiryQuestion = `🤔 ${a4State.criterion}이(가) 어떤가요?`;
+      window.CURRENT_INQUIRY_QUESTION = inquiryQuestion;
+      
       showScreen(`
         ${renderHeader({ number: 4, title: '🧱 내가 분류 기준을 정해요!', criterionLabel: a4State.criterion, fixed: false })}
-        ${renderTutorial(`<span class="hi-yellow text-purple"><strong>"${a4State.criterion}"</strong></span> 기준에 맞춰서 블록을 끌어다 알맞은 칸에 놓아봐요! 🎯`)}
-        ${renderFeedback(`👇 '<span class="hi-pink"><strong>${a4State.criterion}</strong></span>' 기준으로 자유롭게 분류해 봐요! 🌈`, 'happy')}
+        ${renderTutorial(`<span class="hi-yellow"><strong>"${a4State.criterion}"</strong></span> 기준으로 분류해 봐요! 🎯`)}
+        ${renderFeedback(
+          inquiryQuestion,
+          'thinking',
+          '👆 블록을 콕! 눌러서 골라주세요'
+        )}
         <div class="sort-main">
           <div class="item-tray">
             <span class="tray-label">🧱 블록 (${blocks.length}개)</span>
@@ -2287,6 +2453,7 @@
         </div>
       `);
       renderA4Blocks();
+      autoReadScreen(`${a4State.criterion} 기준으로 분류해봐요`);
     }
 
     function renderA4Blocks() {
@@ -2380,7 +2547,7 @@
       function render() {
         showScreen(`
           ${renderTutorial('<strong>오늘 활동이 어땠나요?</strong> 별을 콕! 눌러주세요')}
-          <div style="flex:1; display:flex; align-items:center; justify-content:center;">
+          <div style="flex:1; display:flex; align-items:center; justify-content:center; width:100%;">
             <div class="record-card">
               <div style="font-size:clamp(60px, 9vh, 90px); line-height:1;">🌟</div>
               <h1 class="intro-title">자기 평가</h1>
@@ -2406,6 +2573,7 @@
             </button>
           </div>
         `);
+        autoReadScreen('자기 평가 시간이에요. 오늘 활동을 얼마나 잘했나요? 별을 눌러주세요.');
       }
       window.setRating = (n) => {
         playSfx('click');
@@ -2453,7 +2621,7 @@
 
     function screenRetryOption() {
       showScreen(`
-        <div style="flex:1; display:flex; align-items:center; justify-content:center;">
+        <div style="flex:1; display:flex; align-items:center; justify-content:center; width:100%;">
           <div class="record-card">
             <div style="font-size:clamp(60px, 9vh, 90px); line-height:1;">💪🌟</div>
             <h1 class="intro-title">한번 더 도전해볼까요? 💕</h1>
@@ -2490,7 +2658,7 @@
       fireConfetti();
       playSfx('success');
       showScreen(`
-        <div style="flex:1; display:flex; align-items:center; justify-content:center;">
+        <div style="flex:1; display:flex; align-items:center; justify-content:center; width:100%;">
           <div class="stamp-card">
             <div style="color:#FBBF24; line-height:1; font-size: clamp(60px, 7.8vh, 84px);">${ICONS.trophy}</div>
             <h1 class="intro-title" style="margin-top:clamp(6px, 1vh, 12px);">🏆 분류 마스터! 🏆</h1>
@@ -2522,6 +2690,7 @@
           </div>
         </div>
       `);
+      autoReadScreen(`${STATE.studentName} 친구! 분류 마스터가 되었어요. 정말 멋지게 마쳤어요!`);
     }
 
     function downloadStamp() {
