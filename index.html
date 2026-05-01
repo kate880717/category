@@ -2,7 +2,9 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>🔍 창의 분류 박물관</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -49,6 +51,16 @@
       --highlight-blue: linear-gradient(180deg, transparent 60%, #BAE6FD 60%);
       --highlight-green: linear-gradient(180deg, transparent 60%, #BBF7D0 60%);
       
+      /* === 동적 viewport (JS에서 주입) === */
+      --vw: 100vw;
+      --vh: 100vh;
+      --vmin: 100vmin;
+      --vmax: 100vmax;
+      --1vh: 1vh;
+      --1vw: 1vw;
+      --1vmin: 1vmin;
+      --scale: 1;
+      
       /* === 글씨 크기 시스템 (모든 곳 일괄 제어) === */
       /* min을 매우 크게 잡아서 작은 화면에서도 확실히 보이게 */
       --fs-tiny:    clamp(16px, 2.0vh, 20px);
@@ -60,20 +72,46 @@
       --fs-huge:    clamp(42px, 5.5vh, 60px);
       --fs-mega:    clamp(50px, 7vh, 72px);
     }
+    
+    /* === 화면 방향별 보정 === */
+    /* 세로 화면(portrait)에서 폰트 살짝 작게, 패딩 살짝 줄임 */
+    html.portrait { font-size: 95%; }
+    
+    /* 가로 화면(landscape)에서는 그대로 */
+    html.landscape { font-size: 100%; }
+    
+    /* 작은 화면 보정 (vmin < 600 = 모바일) */
+    html.small-screen { font-size: 90%; }
+    /* 큰 화면 보정 (vmin > 900 = 큰 태블릿/PC) */
+    html.large-screen { font-size: 105%; }
 
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
     html, body { 
       width: 100vw; width: 100dvw;
+      width: var(--vw, 100vw);
       height: 100vh; height: 100dvh;
+      height: var(--vh, 100vh);
       overflow: hidden !important; 
       font-family: var(--font-body); 
       color: var(--c-text);
       user-select: none; -webkit-user-select: none;
-      font-size: clamp(24px, 2.9vh, 30px);
-      line-height: 1.5;
+      font-size: clamp(20px, 2.8vh, 28px);
+      line-height: 1.4;
       letter-spacing: -0.02em;
       position: fixed;
       inset: 0;
+      /* 안전 영역 (노치 등) */
+      padding-top: env(safe-area-inset-top, 0);
+      padding-bottom: env(safe-area-inset-bottom, 0);
+      padding-left: env(safe-area-inset-left, 0);
+      padding-right: env(safe-area-inset-right, 0);
+    }
+    
+    #app {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      overflow: hidden;
     }
     
     em, i { font-style: normal; font-weight: bold; }
@@ -120,21 +158,26 @@
       position: absolute; inset: 0;
       width: 100%; height: 100%;
       display: flex; flex-direction: column;
-      padding: clamp(6px, 1vh, 12px);
-      gap: clamp(6px, 1vh, 12px);
+      padding: clamp(4px, 1vh, 12px) clamp(4px, 1vw, 12px);
+      gap: clamp(4px, 1vh, 12px);
       overflow: hidden !important;
     }
-    .screen > * { max-width: 100%; }
+    .screen > * { max-width: 100%; min-width: 0; }
+    
+    /* 가로 화면에서 패딩 더 작게 (높이 부족 보정) */
+    html.landscape.small-screen .screen {
+      padding: clamp(2px, 0.6vh, 8px) clamp(4px, 1vw, 12px);
+      gap: clamp(2px, 0.6vh, 8px);
+    }
 
     /* 인트로 카드 - 화면 꽉 차게 */
     .intro-card {
       background: white;
-      border-radius: clamp(20px, 3vw, 40px);
-      padding: clamp(16px, 2.5vh, 32px) clamp(20px, 3vw, 40px);
+      border-radius: clamp(16px, 2.5vw, 36px);
+      padding: clamp(14px, 2.5vh, 32px) clamp(18px, 3vw, 44px);
       width: 100%;
-      max-width: min(720px, 96vw);
-      max-height: 96vh;
-      max-height: 96dvh;
+      max-width: min(820px, 96vw);
+      max-height: calc(var(--vh, 100vh) - 16px);
       text-align: center;
       box-shadow: 0 20px 50px rgba(99, 102, 241, 0.15), 0 0 0 6px rgba(199, 210, 254, 0.4);
       position: relative;
@@ -142,6 +185,14 @@
       display: flex;
       flex-direction: column;
       justify-content: center;
+    }
+    /* 가로 작은 화면 - 카드 패딩 줄임 */
+    html.landscape.small-screen .intro-card {
+      padding: clamp(8px, 1.5vh, 18px) clamp(14px, 2.5vw, 28px);
+    }
+    /* 세로 화면 - 카드 가로 거의 다 차지 */
+    html.portrait .intro-card {
+      max-width: 96vw;
     }
     .intro-card::before {
       content: '';
@@ -174,14 +225,15 @@
     .intro-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: clamp(6px, 1vh, 10px);
+      gap: clamp(8px, 1.4vh, 12px);
     }
     .intro-card-mini {
-      padding: clamp(8px, 1.5vh, 14px) 12px;
-      border-radius: 16px;
+      padding: clamp(14px, 2.2vh, 22px) 12px;
+      border-radius: 18px;
       font-family: var(--font-display);
-      font-size: clamp(22px, 2.6vh, 26px);
+      font-size: clamp(28px, 3.6vh, 36px);
       font-weight: bold;
+      line-height: 1.2;
     }
     .intro-card-mini.c1 { background: #FEF3C7; color: #92400E; }
     .intro-card-mini.c2 { background: #FCE7F3; color: #BE185D; }
@@ -339,14 +391,14 @@
     /* 튜토리얼 배너 */
     .tutorial-banner {
       background: linear-gradient(90deg, #FEF3C7, #FED7AA);
-      border: 4px solid #FBBF24;
-      border-radius: 22px;
-      padding: clamp(14px, 2.4vh, 22px) clamp(18px, 2.5vw, 28px);
+      border: 3px solid #FBBF24;
+      border-radius: 18px;
+      padding: clamp(8px, 1.2vh, 12px) clamp(14px, 2vw, 20px);
       display: flex;
       align-items: center;
-      gap: 14px;
+      gap: 10px;
       flex-shrink: 0;
-      box-shadow: 0 6px 16px rgba(251, 191, 36, 0.2);
+      box-shadow: 0 4px 10px rgba(251, 191, 36, 0.2);
       position: relative;
       overflow: hidden;
     }
@@ -358,16 +410,16 @@
     }
     @keyframes shimmer { 100% { left: 100%; } }
     .tutorial-icon {
-      font-size: clamp(54px, 6.5vh, 70px);
+      font-size: clamp(28px, 3.8vh, 40px);
       flex-shrink: 0;
       position: relative; z-index: 1;
     }
     .tutorial-text {
       flex: 1;
       font-family: var(--font-display);
-      font-size: clamp(27px, 3.4vh, 33px);
+      font-size: clamp(22px, 2.8vh, 28px);
       color: #78350F;
-      line-height: 1.5;
+      line-height: 1.3;
       word-break: keep-all;
       position: relative; z-index: 1;
       letter-spacing: -0.3px;
@@ -717,11 +769,10 @@
     /* 녹음 카드 - 화면 꽉 차게 */
     .record-card {
       background: linear-gradient(180deg, white, #FAF5FF);
-      border-radius: clamp(20px, 3vh, 32px);
-      padding: clamp(14px, 2vh, 24px) clamp(18px, 2.5vw, 32px);
+      border-radius: clamp(16px, 2.5vh, 28px);
+      padding: clamp(12px, 2vh, 22px) clamp(16px, 2.5vw, 30px);
       max-width: min(720px, 96vw);
-      max-height: 96vh;
-      max-height: 96dvh;
+      max-height: calc(var(--vh, 100vh) - 16px);
       width: 100%;
       box-shadow: 0 16px 40px rgba(99, 102, 241, 0.15);
       text-align: center;
@@ -730,6 +781,14 @@
       flex-direction: column;
       justify-content: center;
       overflow: hidden;
+    }
+    /* 가로 작은 화면 - 패딩 줄임 */
+    html.landscape.small-screen .record-card {
+      padding: clamp(8px, 1.5vh, 16px) clamp(14px, 2.5vw, 26px);
+    }
+    /* 세로 화면 - 카드 가로 다 차지 */
+    html.portrait .record-card {
+      max-width: 96vw;
     }
     .record-question {
       font-family: var(--font-display);
@@ -818,14 +877,20 @@
     /* 임명장 */
     .stamp-card {
       background: white;
-      border-radius: 48px;
-      padding: clamp(24px, 4vh, 40px);
-      max-width: min(560px, 92vw);
+      border-radius: clamp(24px, 4vw, 48px);
+      padding: clamp(14px, 2.5vh, 36px) clamp(18px, 3vw, 40px);
+      max-width: min(640px, 96vw);
+      max-height: calc(var(--vh, 100vh) - 16px);
       width: 100%;
       text-align: center;
       box-shadow: 0 20px 50px rgba(99, 102, 241, 0.2), 0 0 0 12px rgba(199, 210, 254, 0.4);
       position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      overflow: hidden;
     }
+    html.portrait .stamp-card { max-width: 96vw; }
     .stamp-circle {
       display: inline-block;
       border: 6px dashed var(--c-primary-light);
@@ -899,9 +964,46 @@
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.3); border-radius: 4px; }
 
+    /* === 반응형 미디어 쿼리 === */
+    /* 좁은 화면 (모바일 세로) - 트레이/분류함 세로 배치 */
     @media (max-width: 640px) {
-      .sort-main { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; }
+      .sort-main { 
+        grid-template-columns: 1fr; 
+        grid-template-rows: 1fr 1.2fr; 
+      }
       .bin-inputs { grid-template-columns: 1fr 1fr; }
+      .activity-header { padding: 8px 12px; gap: 8px; }
+      .activity-title { font-size: clamp(20px, 3vh, 26px); }
+    }
+    
+    /* 가로 짧은 화면 (낮은 노트북, 모바일 가로) */
+    @media (max-height: 500px) {
+      .intro-card, .record-card, .stamp-card { 
+        padding: 10px 20px;
+      }
+      .intro-title { font-size: clamp(28px, 5vh, 40px) !important; margin: 6px 0; }
+      .intro-subtitle { font-size: clamp(18px, 2.5vh, 22px) !important; margin-bottom: 10px; }
+      .record-question { font-size: clamp(22px, 3.5vh, 32px) !important; padding: 10px !important; margin-bottom: 12px !important; }
+      .record-button { 
+        width: clamp(70px, 10vh, 100px) !important;
+        height: clamp(70px, 10vh, 100px) !important;
+      }
+      .feedback-area { min-height: clamp(40px, 6vh, 60px); padding: 6px 14px; }
+      .tutorial-banner { padding: 5px 12px; }
+    }
+    
+    /* 매우 작은 화면 (모바일 가로) */
+    @media (max-height: 400px) {
+      .intro-title { font-size: clamp(24px, 4vh, 32px) !important; }
+      .intro-grid { gap: 4px; }
+      .intro-card-mini { padding: 6px !important; font-size: clamp(20px, 3vh, 26px) !important; }
+      .btn-main { padding: 10px !important; font-size: clamp(20px, 3.5vh, 28px) !important; }
+    }
+    
+    /* === 가로 화면에서 sort-main 비율 조정 === */
+    /* 가로가 넓으면 트레이가 더 작게, 분류함이 더 크게 */
+    @media (min-aspect-ratio: 16/9) {
+      .sort-main { grid-template-columns: 0.8fr 1.2fr; }
     }
     
     @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
@@ -910,6 +1012,58 @@
 <body>
   <div id="app"></div>
   <canvas id="confetti-canvas" class="confetti"></canvas>
+
+  <script>
+    // ================================================
+    //  반응형 viewport 시스템 (모든 기기 대응)
+    // ================================================
+    // CSS의 100vh가 모바일 주소창 때문에 부정확한 문제 해결
+    // JS로 실제 보이는 viewport를 측정해서 CSS 변수에 주입
+    function updateViewportSize() {
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      const vmin = Math.min(vw, vh);
+      const vmax = Math.max(vw, vh);
+      
+      document.documentElement.style.setProperty('--vw', vw + 'px');
+      document.documentElement.style.setProperty('--vh', vh + 'px');
+      document.documentElement.style.setProperty('--vmin', vmin + 'px');
+      document.documentElement.style.setProperty('--vmax', vmax + 'px');
+      
+      // 1vh, 1vw 단위 (계산용)
+      document.documentElement.style.setProperty('--1vh', (vh * 0.01) + 'px');
+      document.documentElement.style.setProperty('--1vw', (vw * 0.01) + 'px');
+      document.documentElement.style.setProperty('--1vmin', (vmin * 0.01) + 'px');
+      
+      // 화면 비율로 글씨 크기 동적 조정
+      // 기준: 1024x768 (태블릿 가로) → scale 1.0
+      // 작은 화면일수록 폰트도 작아짐, 큰 화면일수록 커짐
+      const baseSize = 1024 * 768;
+      const currentSize = vw * vh;
+      const ratio = Math.sqrt(currentSize / baseSize);
+      const scale = Math.max(0.7, Math.min(1.6, ratio));
+      document.documentElement.style.setProperty('--scale', scale);
+      
+      // 화면 방향 클래스
+      document.documentElement.classList.toggle('landscape', vw > vh);
+      document.documentElement.classList.toggle('portrait', vh >= vw);
+      
+      // 화면 크기 카테고리
+      document.documentElement.classList.toggle('small-screen', vmin < 600);
+      document.documentElement.classList.toggle('medium-screen', vmin >= 600 && vmin < 900);
+      document.documentElement.classList.toggle('large-screen', vmin >= 900);
+    }
+    
+    updateViewportSize();
+    window.addEventListener('resize', updateViewportSize);
+    window.addEventListener('orientationchange', () => {
+      setTimeout(updateViewportSize, 100);
+    });
+    // visualViewport (모바일 키보드 등 대응)
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', updateViewportSize);
+    }
+  </script>
 
   <script>
     // ================================================
@@ -1547,16 +1701,16 @@
     function getRecordingHint(phase, idx) {
       if (phase === 'pre') {
         const hints = [
-          '💡 예: "연필이랑 자랑 있어요. 글씨 쓰는 거랑 줄 긋는 거로 나눌 수 있어요"',
-          '💡 예: "사자, 새, 물고기가 있어요. 다리 개수로 나눠봐요"',
-          '💡 자유롭게 생각나는 대로 말해보세요!'
+          '💡 예시<br/>"연필과 자가 있어요.<br/>글씨 쓰기와 줄 긋기로 나눠요"',
+          '💡 예시<br/>"사자, 새, 물고기가 있어요.<br/>다리 개수로 나눠봐요"',
+          '💡 자유롭게 말해도 괜찮아요!'
         ];
         return hints[idx] || hints[2];
       } else {
         const hints = [
-          '💡 예: "쓰임새로 나눌 수도 있고, 색깔로도 나눌 수 있어요"',
-          '💡 예: "다리 수로 나누거나, 사는 곳으로도 나눌 수 있어요"',
-          '💡 두 가지 다른 기준으로 설명해 봐요!'
+          '💡 예시<br/>"쓰임새로도, 색깔로도<br/>나눌 수 있어요"',
+          '💡 예시<br/>"다리 수로도, 사는 곳으로도<br/>나눌 수 있어요"',
+          '💡 두 가지 기준으로 말해봐요!'
         ];
         return hints[idx] || hints[2];
       }
@@ -1584,8 +1738,8 @@
               ${phaseEmoji} ${phaseLabel} ${idx + 1}/${questions.length}
             </div>
             <div class="record-question">💭 ${q.질문}</div>
-            <div style="background:#FEF3C7; border:3px solid #FBBF24; border-radius:14px; padding:clamp(10px, 1.5vh, 14px); margin-bottom:clamp(10px, 1.5vh, 14px); text-align:left;">
-              <p style="color:#78350F; font-size: clamp(22px, 2.6vh, 26px); line-height:1.5;">
+            <div style="background:#FEF3C7; border:3px solid #FBBF24; border-radius:14px; padding:clamp(10px, 1.5vh, 14px); margin-bottom:clamp(10px, 1.5vh, 14px); text-align:center;">
+              <p style="color:#78350F; font-size: clamp(22px, 2.6vh, 26px); line-height:1.4; word-break:keep-all;">
                 ${hint}
               </p>
             </div>
