@@ -1,1 +1,394 @@
+/**
+ * ============================================================
+ *  창의 분류 박물관 - Apps Script 백엔드
+ *  Code.gs (v2 - 깃허브 페이지 연동용)
+ * ============================================================
+ * 
+ *  [설치 순서]
+ *  1. 새 Google Sheets 만들기
+ *  2. 확장 프로그램 → Apps Script 열기
+ *  3. 기본 Code.gs 내용 다 지우고 이 파일 전체 붙여넣기
+ *  4. 저장 (Ctrl+S)
+ *  5. 함수 드롭다운에서 setupSheets 선택 → 실행 → 권한 승인
+ *  6. 배포 → 새 배포 → 톱니바퀴 → 웹 앱
+ *     - 다음 사용자 인증으로 실행: 나
+ *     - 액세스 권한: 모든 사용자
+ *  7. 웹 앱 URL 복사 → Claude에게 알려주기
+ *  8. (수정시) 배포 → 배포 관리 → 연필 아이콘 → 새 버전 → 배포
+ * 
+ *  [학생 데이터 수정]
+ *  - 시트에서 직접 수정하면 즉시 반영됨 (재배포 X)
+ *  
+ * ============================================================
+ */
 
+const SHEET_NAMES = {
+  STUDENTS: '학생명단',
+  ACTIVITY1: '활동1_학용품',
+  ACTIVITY2: '활동2_동물',
+  ACTIVITY3: '활동3_기준찾기',
+  ACTIVITY4_BLOCKS: '활동4_블록',
+  RESULTS: '학습결과',
+  RECORDINGS: '녹음기록',
+  PRE_QUESTIONS: '사전질문',
+  POST_QUESTIONS: '사후질문'
+};
+
+const DRIVE_FOLDER_NAME = '분류박물관_녹음파일';
+
+// ============================================================
+//  doGet / doPost - CORS & JSONP 지원
+// ============================================================
+
+/**
+ * GET 요청 처리
+ * - ?action=getAllData → 모든 시트 데이터 반환
+ * - JSONP callback 지원 (?callback=xxx)
+ */
+function doGet(e) {
+  const params = e.parameter || {};
+  const action = params.action;
+  let result;
+  
+  try {
+    if (action === 'getAllData') {
+      result = { success: true, data: getAllData() };
+    } else if (action === 'ping') {
+      result = { success: true, msg: 'pong', time: new Date().toISOString() };
+    } else {
+      result = { success: false, error: 'Unknown action: ' + action };
+    }
+  } catch (err) {
+    result = { success: false, error: err.toString() };
+  }
+  
+  // JSONP 지원 (CORS 우회용)
+  if (params.callback) {
+    return ContentService
+      .createTextOutput(params.callback + '(' + JSON.stringify(result) + ')')
+      .setMimeType(ContentService.MimeType.JAVASCRIPT);
+  }
+  
+  return ContentService
+    .createTextOutput(JSON.stringify(result))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+/**
+ * POST 요청 처리 - 결과 저장, 녹음 저장
+ * Apps Script는 자동으로 CORS 허용함 (웹앱이 모든 사용자 접근 시)
+ */
+function doPost(e) {
+  let result;
+  
+  try {
+    // POST body parsing
+    const payload = JSON.parse(e.postData.contents);
+    const action = payload.action;
+    
+    if (action === 'saveResult') {
+      result = { success: true, ...saveResult(payload) };
+    } else if (action === 'saveRecording') {
+      result = { success: true, ...saveRecording(payload) };
+    } else {
+      result = { success: false, error: 'Unknown action: ' + action };
+    }
+  } catch (err) {
+    result = { success: false, error: err.toString() };
+  }
+  
+  return ContentService
+    .createTextOutput(JSON.stringify(result))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+// ============================================================
+//  시트 셋업 (한 번만 실행)
+// ============================================================
+function setupSheets() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  
+  // 1. 학생 명단
+  createSheetIfMissing(ss, SHEET_NAMES.STUDENTS, 
+    ['학번', '이름', '반'],
+    [
+      [1, '김민준', '1-1'],
+      [2, '이서윤', '1-1'],
+      [3, '박지호', '1-1'],
+      [4, '최수아', '1-1'],
+      [5, '정도윤', '1-1']
+    ]);
+  
+  // 2. 활동1 학용품
+  createSheetIfMissing(ss, SHEET_NAMES.ACTIVITY1,
+    ['ID', '아이콘', '이름', '분류기준ID', '분류기준라벨'],
+    [
+      ['i1', '✏️', '연필', 'pencil', '연필 종류'],
+      ['i2', '🖊️', '볼펜', 'pencil', '연필 종류'],
+      ['i3', '🖍️', '색연필', 'pencil', '연필 종류'],
+      ['i4', '📏', '자', 'ruler', '자 종류'],
+      ['i5', '📐', '삼각자', 'ruler', '자 종류'],
+      ['i6', '📓', '공책', 'book', '공책 종류'],
+      ['i7', '📒', '노트', 'book', '공책 종류'],
+      ['i8', '📔', '수첩', 'book', '공책 종류']
+    ]);
+  
+  // 3. 활동2 동물
+  createSheetIfMissing(ss, SHEET_NAMES.ACTIVITY2,
+    ['ID', '아이콘', '이름', '분류기준ID', '분류기준라벨'],
+    [
+      ['a1', '🐟', '물고기', '0', '다리 0개'],
+      ['a2', '🐬', '돌고래', '0', '다리 0개'],
+      ['a3', '🐍', '뱀', '0', '다리 0개'],
+      ['a4', '🐦', '까치', '2', '다리 2개'],
+      ['a5', '🦅', '독수리', '2', '다리 2개'],
+      ['a6', '🦉', '부엉이', '2', '다리 2개'],
+      ['a7', '🦓', '얼룩말', '4', '다리 4개'],
+      ['a8', '🦌', '사슴', '4', '다리 4개'],
+      ['a9', '🦏', '코뿔소', '4', '다리 4개'],
+      ['a10', '🦁', '사자', '4', '다리 4개']
+    ]);
+  
+  // 4. 활동3 기준 찾기
+  createSheetIfMissing(ss, SHEET_NAMES.ACTIVITY3,
+    ['ID', '아이콘', '보기', '정답여부', '피드백'],
+    [
+      ['opt1', '💖', '예쁜 블록 / 안 예쁜 블록', false, "'예쁘다'는 사람마다 달라요. 친구는 다르게 분류할 수 있어요."],
+      ['opt2', '🎨', '색깔별로 나누기', true, '맞아요! 색깔은 누가 봐도 똑같아서 좋은 기준이에요.'],
+      ['opt3', '🔷', '모양별로 나누기', true, '딩동댕! 모양도 누가 봐도 똑같이 알 수 있어요.'],
+      ['opt4', '😊', '내가 좋아하는 / 싫어하는 블록', false, "'좋아한다'는 마음은 사람마다 달라요."],
+      ['opt5', '📏', '크기별로 나누기', true, '좋아요! 크기도 누구나 똑같이 비교할 수 있어요.'],
+      ['opt6', '✨', '소중한 블록 / 안 소중한 블록', false, "'소중하다'도 사람마다 다르니 분류 기준이 될 수 없어요."]
+    ]);
+  
+  // 5. 활동4 블록
+  createSheetIfMissing(ss, SHEET_NAMES.ACTIVITY4_BLOCKS,
+    ['ID', '색깔', '모양', '크기'],
+    [
+      ['b1', 'red', 'circle', 'big'],
+      ['b2', 'blue', 'square', 'small'],
+      ['b3', 'yellow', 'triangle', 'big'],
+      ['b4', 'red', 'square', 'small'],
+      ['b5', 'blue', 'circle', 'big'],
+      ['b6', 'yellow', 'circle', 'small'],
+      ['b7', 'green', 'square', 'big'],
+      ['b8', 'green', 'triangle', 'small']
+    ]);
+  
+  // 6. 사전질문
+  createSheetIfMissing(ss, SHEET_NAMES.PRE_QUESTIONS,
+    ['ID', '질문', '예시이미지설명'],
+    [
+      ['pre1', '여러 가지 학용품이 있어요. 어떻게 분류할 수 있을까요? 자유롭게 말해보세요.', '학용품 모음'],
+      ['pre2', '동물원에 다양한 동물이 있어요. 동물들을 어떻게 나눌 수 있을까요?', '여러 동물']
+    ]);
+  
+  // 7. 사후질문
+  createSheetIfMissing(ss, SHEET_NAMES.POST_QUESTIONS,
+    ['ID', '질문', '예시이미지설명'],
+    [
+      ['post1', '같은 학용품을 두 가지 다른 기준으로 분류해 볼까요? 어떻게 나눌 수 있을지 말해보세요.', '학용품 모음'],
+      ['post2', '오늘 배운 것을 활용해서, 동물을 분류 기준 두 가지로 나누어 설명해 보세요.', '여러 동물']
+    ]);
+  
+  // 8. 학습결과
+  createSheetIfMissing(ss, SHEET_NAMES.RESULTS,
+    ['타임스탬프', '학번', '이름', '활동1점수', '활동2점수', '활동3점수', '활동4완료수', '자기평가별점', '재도전횟수', '총소요시간(초)'],
+    []);
+  
+  // 9. 녹음기록
+  createSheetIfMissing(ss, SHEET_NAMES.RECORDINGS,
+    ['타임스탬프', '학번', '이름', '단계', '질문ID', '질문', '음성→텍스트', '드라이브URL'],
+    []);
+  
+  applyHeaderStyling(ss);
+  
+  SpreadsheetApp.getUi().alert(
+    '✅ 시트 셋업 완료!\n\n' +
+    '9개 시트가 생성되었어요.\n' +
+    '이제 배포 → 새 배포 → 웹 앱으로 배포하고\n' +
+    '웹 앱 URL을 복사해 주세요.'
+  );
+}
+
+function createSheetIfMissing(ss, name, header, dataRows) {
+  let sheet = ss.getSheetByName(name);
+  if (!sheet) {
+    sheet = ss.insertSheet(name);
+  } else {
+    if (sheet.getLastRow() > 0) return; // 데이터 보존
+  }
+  sheet.getRange(1, 1, 1, header.length).setValues([header]);
+  if (dataRows.length > 0) {
+    sheet.getRange(2, 1, dataRows.length, dataRows[0].length).setValues(dataRows);
+  }
+}
+
+function applyHeaderStyling(ss) {
+  Object.values(SHEET_NAMES).forEach(name => {
+    const sheet = ss.getSheetByName(name);
+    if (!sheet || sheet.getLastRow() === 0) return;
+    const headerRange = sheet.getRange(1, 1, 1, sheet.getLastColumn());
+    headerRange.setBackground('#6366F1').setFontColor('#FFFFFF').setFontWeight('bold');
+    sheet.setFrozenRows(1);
+    try { sheet.autoResizeColumns(1, sheet.getLastColumn()); } catch(e) {}
+  });
+}
+
+// ============================================================
+//  데이터 읽기
+// ============================================================
+function getAllData() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  return {
+    students: readSheetAsObjects(ss, SHEET_NAMES.STUDENTS),
+    activity1: readSheetAsObjects(ss, SHEET_NAMES.ACTIVITY1),
+    activity2: readSheetAsObjects(ss, SHEET_NAMES.ACTIVITY2),
+    activity3: readSheetAsObjects(ss, SHEET_NAMES.ACTIVITY3),
+    activity4Blocks: readSheetAsObjects(ss, SHEET_NAMES.ACTIVITY4_BLOCKS),
+    preQuestions: readSheetAsObjects(ss, SHEET_NAMES.PRE_QUESTIONS),
+    postQuestions: readSheetAsObjects(ss, SHEET_NAMES.POST_QUESTIONS)
+  };
+}
+
+function readSheetAsObjects(ss, sheetName) {
+  const sheet = ss.getSheetByName(sheetName);
+  if (!sheet || sheet.getLastRow() < 2) return [];
+  const values = sheet.getDataRange().getValues();
+  const headers = values[0];
+  return values.slice(1).filter(row => row[0] !== '' && row[0] !== null).map(row => {
+    const obj = {};
+    headers.forEach((h, i) => { 
+      let v = row[i];
+      // boolean 값 정규화
+      if (typeof v === 'string') {
+        if (v === 'TRUE' || v === 'true') v = true;
+        else if (v === 'FALSE' || v === 'false') v = false;
+      }
+      obj[h] = v; 
+    });
+    return obj;
+  });
+}
+
+// ============================================================
+//  학습 결과 저장
+// ============================================================
+function saveResult(payload) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName(SHEET_NAMES.RESULTS);
+  sheet.appendRow([
+    new Date(),
+    payload.studentId || '',
+    payload.studentName || '',
+    payload.activity1Score || 0,
+    payload.activity2Score || 0,
+    payload.activity3Score || 0,
+    payload.activity4Count || 0,
+    payload.selfRating || 0,
+    payload.retryCount || 0,
+    payload.totalSeconds || 0
+  ]);
+  return {};
+}
+
+// ============================================================
+//  녹음 파일 저장 (Drive + Sheets)
+// ============================================================
+function saveRecording(payload) {
+  let driveUrl = '';
+  
+  // Drive에 음성 파일 저장
+  if (payload.audioBase64 && payload.audioBase64.length > 0) {
+    const folder = getOrCreateFolder(DRIVE_FOLDER_NAME);
+    const decoded = Utilities.base64Decode(payload.audioBase64);
+    const mimeType = payload.mimeType || 'audio/webm';
+    const ext = mimeType.split('/')[1].split(';')[0];
+    const safeName = (payload.studentName || 'unknown').replace(/[^\w가-힣]/g, '');
+    const fileName = `${payload.studentId || 'X'}_${safeName}_${payload.phase}_${payload.questionId}_${new Date().getTime()}.${ext}`;
+    const blob = Utilities.newBlob(decoded, mimeType, fileName);
+    const file = folder.createFile(blob);
+    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    driveUrl = file.getUrl();
+  }
+  
+  // Sheet에 텍스트 + URL 기록
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName(SHEET_NAMES.RECORDINGS);
+  sheet.appendRow([
+    new Date(),
+    payload.studentId || '',
+    payload.studentName || '',
+    payload.phase === 'pre' ? '사전' : '사후',
+    payload.questionId || '',
+    payload.question || '',
+    payload.transcript || '',
+    driveUrl
+  ]);
+  
+  return { driveUrl: driveUrl };
+}
+
+function getOrCreateFolder(name) {
+  const folders = DriveApp.getFoldersByName(name);
+  if (folders.hasNext()) return folders.next();
+  return DriveApp.createFolder(name);
+}
+
+// ============================================================
+//  메뉴
+// ============================================================
+function onOpen() {
+  SpreadsheetApp.getUi()
+    .createMenu('🔍 분류박물관')
+    .addItem('① 시트 셋업', 'setupSheets')
+    .addItem('② 웹앱 URL 보기', 'showWebAppUrl')
+    .addItem('③ 연결 테스트', 'testConnection')
+    .addSeparator()
+    .addItem('학습결과 시트 비우기', 'clearResults')
+    .addItem('녹음기록 시트 비우기', 'clearRecordings')
+    .addToUi();
+}
+
+function showWebAppUrl() {
+  const url = ScriptApp.getService().getUrl();
+  if (!url) {
+    SpreadsheetApp.getUi().alert(
+      '⚠️ 아직 배포가 안 됐어요.\n\n' +
+      '우측 상단 [배포] → [새 배포] → 톱니바퀴 → [웹 앱]\n' +
+      '액세스: 모든 사용자\n실행: 나\n\n' +
+      '배포 후 다시 눌러보세요.'
+    );
+  } else {
+    SpreadsheetApp.getUi().alert('🔗 웹앱 URL:\n\n' + url + '\n\n이 URL을 Claude에게 알려주세요.');
+  }
+}
+
+function testConnection() {
+  const ui = SpreadsheetApp.getUi();
+  try {
+    const data = getAllData();
+    const counts = Object.entries(data).map(([k, v]) => `• ${k}: ${v.length}개`).join('\n');
+    ui.alert('✅ 연결 정상!\n\n' + counts);
+  } catch (err) {
+    ui.alert('❌ 오류:\n\n' + err.toString());
+  }
+}
+
+function clearResults() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName(SHEET_NAMES.RESULTS);
+  if (sheet.getLastRow() > 1) {
+    sheet.getRange(2, 1, sheet.getLastRow() - 1, sheet.getLastColumn()).clearContent();
+  }
+  SpreadsheetApp.getUi().alert('학습결과 시트를 비웠어요.');
+}
+
+function clearRecordings() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName(SHEET_NAMES.RECORDINGS);
+  if (sheet.getLastRow() > 1) {
+    sheet.getRange(2, 1, sheet.getLastRow() - 1, sheet.getLastColumn()).clearContent();
+  }
+  SpreadsheetApp.getUi().alert('녹음기록 시트를 비웠어요.');
+}
