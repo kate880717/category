@@ -1,394 +1,2059 @@
-/**
- * ============================================================
- *  창의 분류 박물관 - Apps Script 백엔드
- *  Code.gs (v2 - 깃허브 페이지 연동용)
- * ============================================================
- * 
- *  [설치 순서]
- *  1. 새 Google Sheets 만들기
- *  2. 확장 프로그램 → Apps Script 열기
- *  3. 기본 Code.gs 내용 다 지우고 이 파일 전체 붙여넣기
- *  4. 저장 (Ctrl+S)
- *  5. 함수 드롭다운에서 setupSheets 선택 → 실행 → 권한 승인
- *  6. 배포 → 새 배포 → 톱니바퀴 → 웹 앱
- *     - 다음 사용자 인증으로 실행: 나
- *     - 액세스 권한: 모든 사용자
- *  7. 웹 앱 URL 복사 → Claude에게 알려주기
- *  8. (수정시) 배포 → 배포 관리 → 연필 아이콘 → 새 버전 → 배포
- * 
- *  [학생 데이터 수정]
- *  - 시트에서 직접 수정하면 즉시 반영됨 (재배포 X)
- *  
- * ============================================================
- */
-
-const SHEET_NAMES = {
-  STUDENTS: '학생명단',
-  ACTIVITY1: '활동1_학용품',
-  ACTIVITY2: '활동2_동물',
-  ACTIVITY3: '활동3_기준찾기',
-  ACTIVITY4_BLOCKS: '활동4_블록',
-  RESULTS: '학습결과',
-  RECORDINGS: '녹음기록',
-  PRE_QUESTIONS: '사전질문',
-  POST_QUESTIONS: '사후질문'
-};
-
-const DRIVE_FOLDER_NAME = '분류박물관_녹음파일';
-
-// ============================================================
-//  doGet / doPost - CORS & JSONP 지원
-// ============================================================
-
-/**
- * GET 요청 처리
- * - ?action=getAllData → 모든 시트 데이터 반환
- * - JSONP callback 지원 (?callback=xxx)
- */
-function doGet(e) {
-  const params = e.parameter || {};
-  const action = params.action;
-  let result;
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>🔍 창의 분류 박물관</title>
   
-  try {
-    if (action === 'getAllData') {
-      result = { success: true, data: getAllData() };
-    } else if (action === 'ping') {
-      result = { success: true, msg: 'pong', time: new Date().toISOString() };
-    } else {
-      result = { success: false, error: 'Unknown action: ' + action };
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&family=Gaegu:wght@400;700&family=Black+Han+Sans&display=swap" rel="stylesheet">
+  
+  <style>
+    /* ================================================
+     *  STYLES
+     * ================================================ */
+    :root {
+      --c-primary: #6366F1;
+      --c-primary-dark: #4338CA;
+      --c-primary-light: #C7D2FE;
+      --c-accent-pink: #EC4899;
+      --c-accent-yellow: #FBBF24;
+      --c-accent-green: #10B981;
+      --c-accent-orange: #F97316;
+      --c-accent-red: #EF4444;
+      --c-accent-blue: #3B82F6;
+      --c-accent-purple: #8B5CF6;
+      --c-bg: #FEF7FF;
+      --c-text: #1E293B;
+      --c-text-light: #64748B;
+      --font-display: 'Black Han Sans', 'Jua', sans-serif;
+      --font-body: 'Jua', 'Gaegu', sans-serif;
+      --font-handwrite: 'Gaegu', sans-serif;
     }
-  } catch (err) {
-    result = { success: false, error: err.toString() };
-  }
-  
-  // JSONP 지원 (CORS 우회용)
-  if (params.callback) {
-    return ContentService
-      .createTextOutput(params.callback + '(' + JSON.stringify(result) + ')')
-      .setMimeType(ContentService.MimeType.JAVASCRIPT);
-  }
-  
-  return ContentService
-    .createTextOutput(JSON.stringify(result))
-    .setMimeType(ContentService.MimeType.JSON);
-}
 
-/**
- * POST 요청 처리 - 결과 저장, 녹음 저장
- * Apps Script는 자동으로 CORS 허용함 (웹앱이 모든 사용자 접근 시)
- */
-function doPost(e) {
-  let result;
-  
-  try {
-    // POST body parsing
-    const payload = JSON.parse(e.postData.contents);
-    const action = payload.action;
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    html, body { 
+      height: 100vh; height: 100dvh;
+      overflow: hidden; 
+      font-family: var(--font-body); 
+      color: var(--c-text);
+      user-select: none; -webkit-user-select: none;
+      font-size: 16px;
+    }
+    body {
+      background: 
+        radial-gradient(circle at 10% 20%, rgba(236, 72, 153, 0.08) 0%, transparent 50%),
+        radial-gradient(circle at 90% 80%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
+        radial-gradient(circle at 50% 50%, rgba(251, 191, 36, 0.05) 0%, transparent 50%),
+        linear-gradient(135deg, #FEF7FF 0%, #EFF6FF 50%, #FDF4FF 100%);
+    }
+    #app { width: 100%; height: 100%; display: flex; flex-direction: column; position: relative; }
     
-    if (action === 'saveResult') {
-      result = { success: true, ...saveResult(payload) };
-    } else if (action === 'saveRecording') {
-      result = { success: true, ...saveRecording(payload) };
-    } else {
-      result = { success: false, error: 'Unknown action: ' + action };
+    button { font-family: inherit; cursor: pointer; border: none; background: none; }
+    input { font-family: inherit; }
+
+    .screen {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column;
+      padding: clamp(8px, 1.5vh, 16px);
+      gap: clamp(8px, 1.2vh, 14px);
+      overflow: hidden;
     }
-  } catch (err) {
-    result = { success: false, error: err.toString() };
-  }
-  
-  return ContentService
-    .createTextOutput(JSON.stringify(result))
-    .setMimeType(ContentService.MimeType.JSON);
-}
 
-// ============================================================
-//  시트 셋업 (한 번만 실행)
-// ============================================================
-function setupSheets() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  
-  // 1. 학생 명단
-  createSheetIfMissing(ss, SHEET_NAMES.STUDENTS, 
-    ['학번', '이름', '반'],
-    [
-      [1, '김민준', '1-1'],
-      [2, '이서윤', '1-1'],
-      [3, '박지호', '1-1'],
-      [4, '최수아', '1-1'],
-      [5, '정도윤', '1-1']
-    ]);
-  
-  // 2. 활동1 학용품
-  createSheetIfMissing(ss, SHEET_NAMES.ACTIVITY1,
-    ['ID', '아이콘', '이름', '분류기준ID', '분류기준라벨'],
-    [
-      ['i1', '✏️', '연필', 'pencil', '연필 종류'],
-      ['i2', '🖊️', '볼펜', 'pencil', '연필 종류'],
-      ['i3', '🖍️', '색연필', 'pencil', '연필 종류'],
-      ['i4', '📏', '자', 'ruler', '자 종류'],
-      ['i5', '📐', '삼각자', 'ruler', '자 종류'],
-      ['i6', '📓', '공책', 'book', '공책 종류'],
-      ['i7', '📒', '노트', 'book', '공책 종류'],
-      ['i8', '📔', '수첩', 'book', '공책 종류']
-    ]);
-  
-  // 3. 활동2 동물
-  createSheetIfMissing(ss, SHEET_NAMES.ACTIVITY2,
-    ['ID', '아이콘', '이름', '분류기준ID', '분류기준라벨'],
-    [
-      ['a1', '🐟', '물고기', '0', '다리 0개'],
-      ['a2', '🐬', '돌고래', '0', '다리 0개'],
-      ['a3', '🐍', '뱀', '0', '다리 0개'],
-      ['a4', '🐦', '까치', '2', '다리 2개'],
-      ['a5', '🦅', '독수리', '2', '다리 2개'],
-      ['a6', '🦉', '부엉이', '2', '다리 2개'],
-      ['a7', '🦓', '얼룩말', '4', '다리 4개'],
-      ['a8', '🦌', '사슴', '4', '다리 4개'],
-      ['a9', '🦏', '코뿔소', '4', '다리 4개'],
-      ['a10', '🦁', '사자', '4', '다리 4개']
-    ]);
-  
-  // 4. 활동3 기준 찾기
-  createSheetIfMissing(ss, SHEET_NAMES.ACTIVITY3,
-    ['ID', '아이콘', '보기', '정답여부', '피드백'],
-    [
-      ['opt1', '💖', '예쁜 블록 / 안 예쁜 블록', false, "'예쁘다'는 사람마다 달라요. 친구는 다르게 분류할 수 있어요."],
-      ['opt2', '🎨', '색깔별로 나누기', true, '맞아요! 색깔은 누가 봐도 똑같아서 좋은 기준이에요.'],
-      ['opt3', '🔷', '모양별로 나누기', true, '딩동댕! 모양도 누가 봐도 똑같이 알 수 있어요.'],
-      ['opt4', '😊', '내가 좋아하는 / 싫어하는 블록', false, "'좋아한다'는 마음은 사람마다 달라요."],
-      ['opt5', '📏', '크기별로 나누기', true, '좋아요! 크기도 누구나 똑같이 비교할 수 있어요.'],
-      ['opt6', '✨', '소중한 블록 / 안 소중한 블록', false, "'소중하다'도 사람마다 다르니 분류 기준이 될 수 없어요."]
-    ]);
-  
-  // 5. 활동4 블록
-  createSheetIfMissing(ss, SHEET_NAMES.ACTIVITY4_BLOCKS,
-    ['ID', '색깔', '모양', '크기'],
-    [
-      ['b1', 'red', 'circle', 'big'],
-      ['b2', 'blue', 'square', 'small'],
-      ['b3', 'yellow', 'triangle', 'big'],
-      ['b4', 'red', 'square', 'small'],
-      ['b5', 'blue', 'circle', 'big'],
-      ['b6', 'yellow', 'circle', 'small'],
-      ['b7', 'green', 'square', 'big'],
-      ['b8', 'green', 'triangle', 'small']
-    ]);
-  
-  // 6. 사전질문
-  createSheetIfMissing(ss, SHEET_NAMES.PRE_QUESTIONS,
-    ['ID', '질문', '예시이미지설명'],
-    [
-      ['pre1', '여러 가지 학용품이 있어요. 어떻게 분류할 수 있을까요? 자유롭게 말해보세요.', '학용품 모음'],
-      ['pre2', '동물원에 다양한 동물이 있어요. 동물들을 어떻게 나눌 수 있을까요?', '여러 동물']
-    ]);
-  
-  // 7. 사후질문
-  createSheetIfMissing(ss, SHEET_NAMES.POST_QUESTIONS,
-    ['ID', '질문', '예시이미지설명'],
-    [
-      ['post1', '같은 학용품을 두 가지 다른 기준으로 분류해 볼까요? 어떻게 나눌 수 있을지 말해보세요.', '학용품 모음'],
-      ['post2', '오늘 배운 것을 활용해서, 동물을 분류 기준 두 가지로 나누어 설명해 보세요.', '여러 동물']
-    ]);
-  
-  // 8. 학습결과
-  createSheetIfMissing(ss, SHEET_NAMES.RESULTS,
-    ['타임스탬프', '학번', '이름', '활동1점수', '활동2점수', '활동3점수', '활동4완료수', '자기평가별점', '재도전횟수', '총소요시간(초)'],
-    []);
-  
-  // 9. 녹음기록
-  createSheetIfMissing(ss, SHEET_NAMES.RECORDINGS,
-    ['타임스탬프', '학번', '이름', '단계', '질문ID', '질문', '음성→텍스트', '드라이브URL'],
-    []);
-  
-  applyHeaderStyling(ss);
-  
-  SpreadsheetApp.getUi().alert(
-    '✅ 시트 셋업 완료!\n\n' +
-    '9개 시트가 생성되었어요.\n' +
-    '이제 배포 → 새 배포 → 웹 앱으로 배포하고\n' +
-    '웹 앱 URL을 복사해 주세요.'
-  );
-}
+    /* 인트로 카드 */
+    .intro-card {
+      background: white;
+      border-radius: clamp(24px, 4vw, 48px);
+      padding: clamp(20px, 4vh, 48px);
+      max-width: min(560px, 90vw);
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 20px 50px rgba(99, 102, 241, 0.15), 0 0 0 8px rgba(199, 210, 254, 0.4);
+      position: relative;
+      overflow: hidden;
+    }
+    .intro-card::before {
+      content: '';
+      position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+      background: conic-gradient(from 0deg, transparent, rgba(251, 191, 36, 0.1), transparent, rgba(236, 72, 153, 0.1), transparent);
+      animation: spin 20s linear infinite;
+      z-index: 0;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .intro-card > * { position: relative; z-index: 1; }
+    
+    .intro-title {
+      font-family: var(--font-display);
+      font-size: clamp(28px, 5vh, 48px);
+      color: var(--c-primary-dark);
+      margin: 16px 0 8px;
+      letter-spacing: -1px;
+    }
+    .intro-subtitle {
+      font-family: var(--font-body);
+      font-size: clamp(16px, 2.4vh, 22px);
+      color: var(--c-text-light);
+      margin-bottom: 24px;
+      line-height: 1.5;
+      word-break: keep-all;
+    }
+    .intro-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+    .intro-card-mini {
+      padding: clamp(8px, 1.5vh, 14px) 12px;
+      border-radius: 16px;
+      font-family: var(--font-display);
+      font-size: clamp(14px, 1.8vh, 18px);
+      font-weight: bold;
+    }
+    .intro-card-mini.c1 { background: #FEF3C7; color: #92400E; }
+    .intro-card-mini.c2 { background: #FCE7F3; color: #BE185D; }
+    .intro-card-mini.c3 { background: #DCFCE7; color: #15803D; }
+    .intro-card-mini.c4 { background: #EDE9FE; color: #6D28D9; }
 
-function createSheetIfMissing(ss, name, header, dataRows) {
-  let sheet = ss.getSheetByName(name);
-  if (!sheet) {
-    sheet = ss.insertSheet(name);
-  } else {
-    if (sheet.getLastRow() > 0) return; // 데이터 보존
-  }
-  sheet.getRange(1, 1, 1, header.length).setValues([header]);
-  if (dataRows.length > 0) {
-    sheet.getRange(2, 1, dataRows.length, dataRows[0].length).setValues(dataRows);
-  }
-}
+    /* 버튼 */
+    .btn-main {
+      width: 100%;
+      padding: clamp(14px, 2.2vh, 22px);
+      background: linear-gradient(180deg, #818CF8, #6366F1);
+      color: white;
+      border-radius: clamp(16px, 2.5vw, 28px);
+      font-family: var(--font-display);
+      font-size: clamp(20px, 2.8vh, 28px);
+      box-shadow: 0 8px 0 0 #4338CA, 0 12px 24px rgba(99, 102, 241, 0.3);
+      transition: all 0.15s;
+      letter-spacing: 0.5px;
+    }
+    .btn-main:hover { transform: translateY(-2px); }
+    .btn-main:active { transform: translateY(6px); box-shadow: 0 2px 0 0 #4338CA; }
+    .btn-main:disabled { background: #CBD5E1; box-shadow: 0 4px 0 0 #94A3B8; cursor: not-allowed; }
+    
+    .btn-secondary {
+      padding: clamp(10px, 1.8vh, 16px) clamp(16px, 2.5vw, 24px);
+      background: white;
+      color: var(--c-primary);
+      border: 3px solid var(--c-primary-light);
+      border-radius: 20px;
+      font-family: var(--font-display);
+      font-size: clamp(15px, 2vh, 19px);
+      box-shadow: 0 4px 0 0 var(--c-primary-light);
+      transition: all 0.15s;
+    }
+    .btn-secondary:active { transform: translateY(3px); box-shadow: 0 1px 0 0 var(--c-primary-light); }
 
-function applyHeaderStyling(ss) {
-  Object.values(SHEET_NAMES).forEach(name => {
-    const sheet = ss.getSheetByName(name);
-    if (!sheet || sheet.getLastRow() === 0) return;
-    const headerRange = sheet.getRange(1, 1, 1, sheet.getLastColumn());
-    headerRange.setBackground('#6366F1').setFontColor('#FFFFFF').setFontWeight('bold');
-    sheet.setFrozenRows(1);
-    try { sheet.autoResizeColumns(1, sheet.getLastColumn()); } catch(e) {}
-  });
-}
+    /* 학생 선택 */
+    .student-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(min(160px, 30vw), 1fr));
+      gap: clamp(8px, 1.5vw, 16px);
+      overflow-y: auto;
+      padding: 8px;
+    }
+    .student-card {
+      background: white;
+      border-radius: 20px;
+      padding: clamp(12px, 2vh, 20px) 8px;
+      text-align: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      border: 4px solid transparent;
+      transition: all 0.15s;
+      cursor: pointer;
+    }
+    .student-card:hover { transform: translateY(-4px); border-color: var(--c-primary-light); }
+    .student-card .avatar {
+      font-size: clamp(36px, 6vh, 56px);
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+    .student-card .name {
+      font-family: var(--font-display);
+      font-size: clamp(16px, 2.2vh, 22px);
+      color: var(--c-text);
+    }
+    .student-card .meta {
+      font-size: clamp(10px, 1.4vh, 13px);
+      color: var(--c-text-light);
+      font-family: var(--font-body);
+    }
 
-// ============================================================
-//  데이터 읽기
-// ============================================================
-function getAllData() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  return {
-    students: readSheetAsObjects(ss, SHEET_NAMES.STUDENTS),
-    activity1: readSheetAsObjects(ss, SHEET_NAMES.ACTIVITY1),
-    activity2: readSheetAsObjects(ss, SHEET_NAMES.ACTIVITY2),
-    activity3: readSheetAsObjects(ss, SHEET_NAMES.ACTIVITY3),
-    activity4Blocks: readSheetAsObjects(ss, SHEET_NAMES.ACTIVITY4_BLOCKS),
-    preQuestions: readSheetAsObjects(ss, SHEET_NAMES.PRE_QUESTIONS),
-    postQuestions: readSheetAsObjects(ss, SHEET_NAMES.POST_QUESTIONS)
-  };
-}
+    /* 활동 헤더 */
+    .activity-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: white;
+      padding: clamp(8px, 1.5vh, 14px) clamp(12px, 2vw, 20px);
+      border-radius: 20px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+      flex-shrink: 0;
+      flex-wrap: wrap;
+    }
+    .activity-badge {
+      background: linear-gradient(135deg, var(--c-primary), var(--c-accent-purple));
+      color: white;
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-family: var(--font-display);
+      font-size: clamp(13px, 1.8vh, 16px);
+      box-shadow: 0 4px 8px rgba(99, 102, 241, 0.3);
+      flex-shrink: 0;
+    }
+    .activity-title {
+      font-family: var(--font-display);
+      font-size: clamp(18px, 2.5vh, 24px);
+      color: var(--c-text);
+      flex: 1;
+      min-width: 0;
+    }
 
-function readSheetAsObjects(ss, sheetName) {
-  const sheet = ss.getSheetByName(sheetName);
-  if (!sheet || sheet.getLastRow() < 2) return [];
-  const values = sheet.getDataRange().getValues();
-  const headers = values[0];
-  return values.slice(1).filter(row => row[0] !== '' && row[0] !== null).map(row => {
-    const obj = {};
-    headers.forEach((h, i) => { 
-      let v = row[i];
-      // boolean 값 정규화
-      if (typeof v === 'string') {
-        if (v === 'TRUE' || v === 'true') v = true;
-        else if (v === 'FALSE' || v === 'false') v = false;
+    /* 분류 기준 박스 */
+    .criterion-box {
+      display: inline-flex;
+      align-items: center;
+      background: #F0F9FF;
+      border: 3px solid #BAE6FD;
+      border-radius: 16px;
+      overflow: hidden;
+      font-family: var(--font-display);
+    }
+    .criterion-label {
+      background: #BAE6FD;
+      padding: 8px 14px;
+      color: #0C4A6E;
+      font-size: clamp(13px, 1.8vh, 16px);
+    }
+    .criterion-value {
+      padding: 8px 16px;
+      color: var(--c-primary-dark);
+      font-size: clamp(15px, 2.2vh, 19px);
+    }
+    .criterion-lock { padding: 0 8px 0 0; color: #0EA5E9; font-size: 16px; }
+
+    /* 스피커 토글 */
+    .speaker-toggle {
+      width: clamp(40px, 5.5vh, 52px);
+      height: clamp(40px, 5.5vh, 52px);
+      border-radius: 50%;
+      background: white;
+      color: #94A3B8;
+      border: 3px solid #E2E8F0;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.06);
+      flex-shrink: 0;
+      position: relative;
+    }
+    .speaker-toggle.on {
+      background: linear-gradient(135deg, var(--c-primary), var(--c-accent-purple));
+      color: white;
+      border-color: var(--c-primary-dark);
+    }
+    .speaker-toggle.on::after {
+      content: ''; position: absolute; inset: -4px;
+      border-radius: 50%; border: 2px dashed var(--c-primary);
+      animation: pulse-ring 2s ease-out infinite;
+    }
+    @keyframes pulse-ring {
+      0% { opacity: 1; transform: scale(1); }
+      100% { opacity: 0; transform: scale(1.4); }
+    }
+
+    /* 튜토리얼 배너 */
+    .tutorial-banner {
+      background: linear-gradient(90deg, #FEF3C7, #FED7AA);
+      border: 3px solid #FBBF24;
+      border-radius: 20px;
+      padding: clamp(10px, 1.8vh, 16px) clamp(14px, 2vw, 22px);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+      box-shadow: 0 6px 16px rgba(251, 191, 36, 0.2);
+      position: relative;
+      overflow: hidden;
+    }
+    .tutorial-banner::before {
+      content: '';
+      position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent);
+      animation: shimmer 3s infinite;
+    }
+    @keyframes shimmer { 100% { left: 100%; } }
+    .tutorial-icon {
+      font-size: clamp(28px, 4vh, 40px);
+      flex-shrink: 0;
+      position: relative; z-index: 1;
+    }
+    .tutorial-text {
+      flex: 1;
+      font-family: var(--font-display);
+      font-size: clamp(15px, 2.2vh, 19px);
+      color: #78350F;
+      line-height: 1.4;
+      word-break: keep-all;
+      position: relative; z-index: 1;
+    }
+    .tutorial-text strong { color: #B45309; }
+
+    /* 피드백 */
+    .feedback-area {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: white;
+      padding: clamp(8px, 1.5vh, 14px) clamp(14px, 2vw, 20px);
+      border-radius: 18px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.06);
+      border: 2px solid #E0E7FF;
+      flex-shrink: 0;
+      min-height: clamp(50px, 7vh, 70px);
+    }
+    .feedback-text {
+      font-family: var(--font-display);
+      font-size: clamp(16px, 2.5vh, 22px);
+      line-height: 1.3;
+      word-break: keep-all;
+    }
+    .feedback-text.happy { color: var(--c-primary); }
+    .feedback-text.sad { color: var(--c-accent-pink); }
+    .feedback-text.thinking { color: var(--c-text); }
+
+    /* 메인 분류 */
+    .sort-main {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: clamp(8px, 1.5vw, 16px);
+      min-height: 0;
+    }
+    
+    .item-tray {
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(10px);
+      border: 4px dashed var(--c-primary-light);
+      border-radius: 24px;
+      padding: clamp(8px, 1.5vh, 14px);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .tray-label {
+      background: linear-gradient(135deg, var(--c-primary), var(--c-accent-purple));
+      color: white;
+      padding: 6px 16px;
+      border-radius: 999px;
+      font-family: var(--font-display);
+      font-size: clamp(13px, 1.8vh, 17px);
+      align-self: center;
+      margin-bottom: 8px;
+      box-shadow: 0 4px 8px rgba(99, 102, 241, 0.25);
+      flex-shrink: 0;
+    }
+    .tray-items {
+      flex: 1;
+      display: flex; flex-wrap: wrap;
+      gap: clamp(6px, 1.2vw, 12px);
+      justify-content: center;
+      align-content: center;
+      overflow-y: auto;
+      padding: 4px;
+    }
+
+    .draggable-item {
+      background: white;
+      border-radius: 20px;
+      padding: clamp(8px, 1.5vh, 14px) clamp(8px, 1.2vw, 12px);
+      box-shadow: 0 6px 14px rgba(0,0,0,0.08), 0 0 0 3px rgba(199, 210, 254, 0.5);
+      cursor: grab;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      transition: transform 0.15s, box-shadow 0.15s;
+      touch-action: none;
+      position: relative;
+    }
+    .draggable-item:hover {
+      transform: translateY(-4px) rotate(2deg);
+      box-shadow: 0 10px 20px rgba(0,0,0,0.12), 0 0 0 4px var(--c-primary-light);
+    }
+    .draggable-item.dragging {
+      cursor: grabbing;
+      transform: scale(1.3) rotate(5deg);
+      z-index: 1000;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+    }
+    .item-icon {
+      font-size: clamp(40px, 6.5vh, 64px);
+      line-height: 1;
+      pointer-events: none;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.15));
+    }
+    .item-name {
+      font-family: var(--font-display);
+      font-size: clamp(11px, 1.5vh, 14px);
+      color: var(--c-text);
+      pointer-events: none;
+    }
+
+    .bins-column {
+      display: grid;
+      gap: clamp(6px, 1vh, 10px);
+      grid-template-rows: repeat(var(--bin-count, 3), 1fr);
+      overflow: hidden;
+    }
+    .drop-bin {
+      border: 4px dashed;
+      border-radius: 22px;
+      padding: clamp(6px, 1.2vh, 12px);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transition: all 0.2s;
+    }
+    .drop-bin.drag-over {
+      transform: scale(1.02);
+      box-shadow: inset 0 0 0 4px rgba(99, 102, 241, 0.3);
+    }
+    .bin-label-row {
+      display: flex; align-items: center; gap: 6px;
+      margin-bottom: 4px; flex-shrink: 0;
+    }
+    .bin-label {
+      background: white;
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-family: var(--font-display);
+      font-size: clamp(13px, 1.9vh, 17px);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      border: 2px solid;
+    }
+    .bin-count {
+      font-family: var(--font-body);
+      font-size: clamp(10px, 1.3vh, 12px);
+      color: var(--c-text-light);
+    }
+    .bin-items {
+      flex: 1;
+      display: flex; flex-wrap: wrap;
+      gap: 6px;
+      align-content: flex-start;
+      overflow-y: auto;
+      padding: 2px;
+    }
+    .bin-item {
+      background: rgba(255,255,255,0.85);
+      border-radius: 14px;
+      padding: 4px 8px;
+      display: flex; flex-direction: column; align-items: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.06);
+      animation: pop-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    @keyframes pop-in {
+      0% { transform: scale(0) rotate(180deg); }
+      100% { transform: scale(1) rotate(0); }
+    }
+    .bin-item .bin-item-icon { font-size: clamp(28px, 4.5vh, 44px); line-height: 1; }
+    .bin-item .bin-item-name { font-family: var(--font-display); font-size: clamp(9px, 1.2vh, 11px); color: var(--c-text-light); }
+
+    .bin-amber { background: #FFFBEB; border-color: #FCD34D; }
+    .bin-amber .bin-label { color: #92400E; border-color: #FCD34D; }
+    .bin-emerald { background: #ECFDF5; border-color: #6EE7B7; }
+    .bin-emerald .bin-label { color: #065F46; border-color: #6EE7B7; }
+    .bin-sky { background: #F0F9FF; border-color: #7DD3FC; }
+    .bin-sky .bin-label { color: #075985; border-color: #7DD3FC; }
+    .bin-rose { background: #FFF1F2; border-color: #FDA4AF; }
+    .bin-rose .bin-label { color: #9F1239; border-color: #FDA4AF; }
+    .bin-violet { background: #F5F3FF; border-color: #C4B5FD; }
+    .bin-violet .bin-label { color: #5B21B6; border-color: #C4B5FD; }
+    .bin-cyan { background: #ECFEFF; border-color: #67E8F9; }
+    .bin-cyan .bin-label { color: #155E75; border-color: #67E8F9; }
+    .bin-orange { background: #FFF7ED; border-color: #FDBA74; }
+    .bin-orange .bin-label { color: #9A3412; border-color: #FDBA74; }
+
+    /* 활동3 */
+    .choice-grid {
+      flex: 1;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
+      gap: clamp(8px, 1.5vh, 14px);
+      overflow-y: auto;
+      padding: 4px;
+    }
+    .choice-card {
+      background: white;
+      border: 4px solid var(--c-primary-light);
+      border-radius: 22px;
+      padding: clamp(12px, 2vh, 18px);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-align: left;
+      box-shadow: 0 6px 14px rgba(0,0,0,0.08);
+      transition: all 0.15s;
+      font-family: var(--font-display);
+      font-size: clamp(15px, 2.2vh, 20px);
+      color: var(--c-text);
+    }
+    .choice-card:hover { transform: translateY(-3px); border-color: var(--c-primary); }
+    .choice-card.selected {
+      background: linear-gradient(135deg, #10B981, #059669);
+      color: white;
+      border-color: #047857;
+    }
+    .choice-icon { font-size: clamp(34px, 5.5vh, 50px); flex-shrink: 0; line-height: 1; }
+    .choice-text { flex: 1; word-break: keep-all; line-height: 1.3; }
+
+    /* 활동4 셋업 */
+    .setup-section {
+      background: white;
+      border-radius: 22px;
+      padding: clamp(12px, 2vh, 18px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+      border: 3px solid #E0E7FF;
+    }
+    .setup-step-header {
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 12px;
+    }
+    .setup-step-num {
+      width: clamp(28px, 4vh, 36px); height: clamp(28px, 4vh, 36px);
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--c-primary), var(--c-accent-purple));
+      color: white;
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-display);
+      font-size: clamp(14px, 2vh, 18px);
+      flex-shrink: 0;
+    }
+    .setup-step-title {
+      font-family: var(--font-display);
+      font-size: clamp(16px, 2.4vh, 21px);
+      color: var(--c-text);
+    }
+    .text-input {
+      width: 100%;
+      padding: clamp(10px, 1.8vh, 14px) 16px;
+      background: #F8FAFC;
+      border: 3px solid #E0E7FF;
+      border-radius: 14px;
+      font-family: var(--font-display);
+      font-size: clamp(15px, 2.2vh, 19px);
+      color: var(--c-text);
+      outline: none;
+      transition: all 0.15s;
+    }
+    .text-input:focus { border-color: var(--c-primary); background: white; }
+    .text-input::placeholder { color: #94A3B8; font-family: var(--font-body); font-weight: normal; }
+
+    .preset-chips { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .preset-chip {
+      padding: clamp(6px, 1.2vh, 10px) clamp(12px, 2vw, 16px);
+      background: white;
+      border: 3px solid #E0E7FF;
+      border-radius: 999px;
+      font-family: var(--font-display);
+      font-size: clamp(13px, 1.8vh, 16px);
+      color: var(--c-text);
+      transition: all 0.15s;
+    }
+    .preset-chip.active {
+      background: linear-gradient(135deg, #8B5CF6, #6366F1);
+      color: white;
+      border-color: #6D28D9;
+    }
+    .preset-chip:hover:not(.active) { border-color: var(--c-primary); }
+
+    .bin-inputs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+    .bin-input-wrap {
+      display: flex; align-items: center; gap: 6px;
+      background: #F8FAFC;
+      border: 2px solid #E0E7FF;
+      border-radius: 12px;
+      padding: 8px 12px;
+    }
+    .bin-input-wrap input {
+      flex: 1; background: transparent; border: none; outline: none;
+      font-family: var(--font-display);
+      font-size: clamp(13px, 1.9vh, 16px);
+      min-width: 0;
+    }
+    .auto-toggle {
+      padding: 6px 12px;
+      border: 2px solid;
+      border-radius: 999px;
+      font-family: var(--font-display);
+      font-size: clamp(11px, 1.5vh, 13px);
+      transition: all 0.15s;
+      flex-shrink: 0;
+    }
+    .auto-toggle.on { background: var(--c-accent-green); color: white; border-color: #047857; }
+    .auto-toggle.off { background: white; color: var(--c-text-light); border-color: #CBD5E1; }
+
+    .block-svg { filter: drop-shadow(0 2px 4px rgba(0,0,0,0.15)); pointer-events: none; }
+
+    /* 녹음 */
+    .record-card {
+      background: linear-gradient(180deg, white, #FAF5FF);
+      border-radius: clamp(20px, 3vh, 32px);
+      padding: clamp(16px, 3vh, 28px);
+      max-width: min(640px, 92vw);
+      width: 100%;
+      box-shadow: 0 16px 40px rgba(99, 102, 241, 0.15);
+      text-align: center;
+      border: 4px solid white;
+    }
+    .record-question {
+      font-family: var(--font-display);
+      font-size: clamp(17px, 2.6vh, 23px);
+      color: var(--c-text);
+      line-height: 1.4;
+      word-break: keep-all;
+      margin-bottom: 16px;
+      padding: clamp(10px, 1.8vh, 16px);
+      background: #FFFBEB;
+      border-radius: 16px;
+      border: 3px solid #FCD34D;
+    }
+    .record-button {
+      width: clamp(80px, 12vh, 120px);
+      height: clamp(80px, 12vh, 120px);
+      border-radius: 50%;
+      background: linear-gradient(135deg, #EF4444, #DC2626);
+      color: white;
+      font-size: clamp(40px, 6vh, 56px);
+      box-shadow: 0 8px 24px rgba(239, 68, 68, 0.4), 0 0 0 0 rgba(239, 68, 68, 0.5);
+      transition: all 0.2s;
+      margin: 8px auto;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .record-button:hover { transform: scale(1.05); }
+    .record-button.recording {
+      animation: pulse-record 1.2s infinite;
+    }
+    @keyframes pulse-record {
+      0%, 100% { box-shadow: 0 8px 24px rgba(239, 68, 68, 0.4), 0 0 0 0 rgba(239, 68, 68, 0.5); }
+      50% { box-shadow: 0 8px 24px rgba(239, 68, 68, 0.4), 0 0 0 24px rgba(239, 68, 68, 0); }
+    }
+    .record-status {
+      font-family: var(--font-display);
+      font-size: clamp(14px, 2vh, 18px);
+      color: var(--c-text-light);
+      margin-top: 8px;
+    }
+    .transcript-box {
+      margin-top: 12px;
+      padding: clamp(10px, 1.8vh, 16px);
+      background: #F0F9FF;
+      border: 3px solid #BAE6FD;
+      border-radius: 16px;
+      font-family: var(--font-handwrite);
+      font-size: clamp(15px, 2.2vh, 19px);
+      color: var(--c-text);
+      min-height: 60px;
+      text-align: left;
+      line-height: 1.5;
+    }
+    .transcript-empty { color: #94A3B8; font-family: var(--font-body); }
+
+    /* 자기평가 */
+    .stars-container {
+      display: flex; justify-content: center; gap: clamp(6px, 1.5vw, 14px);
+      margin: clamp(12px, 2vh, 20px) 0;
+    }
+    .star-btn {
+      font-size: clamp(40px, 7vh, 64px);
+      line-height: 1;
+      transition: transform 0.15s;
+      filter: grayscale(1) brightness(1.4);
+      opacity: 0.5;
+    }
+    .star-btn.filled {
+      filter: none; opacity: 1;
+      animation: star-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    @keyframes star-pop {
+      0% { transform: scale(0.5) rotate(-180deg); }
+      100% { transform: scale(1) rotate(0); }
+    }
+    .star-btn:hover { transform: scale(1.2); }
+
+    /* 임명장 */
+    .stamp-card {
+      background: white;
+      border-radius: 48px;
+      padding: clamp(24px, 4vh, 40px);
+      max-width: min(560px, 92vw);
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 20px 50px rgba(99, 102, 241, 0.2), 0 0 0 12px rgba(199, 210, 254, 0.4);
+      position: relative;
+    }
+    .stamp-circle {
+      display: inline-block;
+      border: 6px dashed var(--c-primary-light);
+      border-radius: 50%;
+      padding: 20px;
+      margin: 16px 0 24px;
+      transform: rotate(-3deg);
+    }
+    .stamp-inner {
+      width: clamp(120px, 18vh, 160px);
+      height: clamp(120px, 18vh, 160px);
+      border: 8px solid var(--c-primary);
+      border-radius: 50%;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      background: white;
+      color: var(--c-primary);
+      box-shadow: inset 0 4px 12px rgba(0,0,0,0.08);
+    }
+    .stamp-inner-text { font-family: var(--font-display); font-size: clamp(14px, 2vh, 18px); }
+    .stamp-inner-emoji { font-size: clamp(36px, 6vh, 56px); margin: 4px 0; }
+
+    /* 콘페티 */
+    .confetti {
+      position: fixed; inset: 0;
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    /* 모달 */
+    .modal-backdrop {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.5);
+      backdrop-filter: blur(4px);
+      z-index: 1000;
+      display: flex; align-items: center; justify-content: center;
+      padding: 16px;
+      animation: fade-in 0.3s;
+    }
+    @keyframes fade-in { from { opacity: 0; } }
+    .modal-content {
+      background: white;
+      border-radius: 32px;
+      padding: clamp(20px, 3vh, 32px);
+      max-width: min(560px, 92vw);
+      width: 100%;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+      animation: slide-up 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      text-align: center;
+    }
+    @keyframes slide-up {
+      from { transform: translateY(40px) scale(0.95); opacity: 0; }
+      to { transform: translateY(0) scale(1); opacity: 1; }
+    }
+    .modal-title {
+      font-family: var(--font-display);
+      font-size: clamp(20px, 3vh, 28px);
+      color: var(--c-text);
+      margin: 12px 0;
+    }
+    .modal-body {
+      font-family: var(--font-body);
+      font-size: clamp(15px, 2vh, 18px);
+      color: var(--c-text-light);
+      line-height: 1.5;
+      word-break: keep-all;
+      margin-bottom: 20px;
+    }
+
+    /* 스크롤바 */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.3); border-radius: 4px; }
+
+    @media (max-width: 640px) {
+      .sort-main { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; }
+      .bin-inputs { grid-template-columns: 1fr 1fr; }
+    }
+    
+    @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+  <canvas id="confetti-canvas" class="confetti"></canvas>
+
+  <script>
+    // ================================================
+    //  설정 (Apps Script URL)
+    // ================================================
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbxWO0FLmGsWpGt0a6JWbiPU95rk69g_Bg0K8o4sYqtPv5JdRaznAjC3UafDxpTF7xERdQ/exec";
+
+    // ================================================
+    //  GAS 통신 함수 (CORS 대응)
+    // ================================================
+    function gasGet(action) {
+      // GET은 CORS OK (no-cors 안 써도 됨)
+      return fetch(GAS_URL + '?action=' + action)
+        .then(r => r.json());
+    }
+
+    function gasPost(payload) {
+      // POST: text/plain으로 보내야 CORS preflight 안 발생
+      return fetch(GAS_URL, {
+        method: 'POST',
+        mode: 'cors',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(payload),
+        redirect: 'follow'
+      }).then(r => r.json());
+    }
+
+    // ================================================
+    //  전역 상태
+    // ================================================
+    window.STATE = {
+      speakerOn: false,
+      studentId: null,
+      studentName: null,
+      studentClass: null,
+      data: null,
+      scores: { a1: 0, a2: 0, a3: 0, a4: 0 },
+      preRecordings: [],
+      postRecordings: [],
+      startTime: null,
+      selfRating: 0,
+      retryCount: 0
+    };
+
+    // ================================================
+    //  스피커 / TTS / 효과음
+    // ================================================
+    function toggleSpeaker() {
+      STATE.speakerOn = !STATE.speakerOn;
+      document.querySelectorAll('.speaker-toggle').forEach(btn => {
+        btn.classList.toggle('on', STATE.speakerOn);
+        btn.innerHTML = STATE.speakerOn ? ICONS.speakerOn : ICONS.speakerOff;
+      });
+      if (!STATE.speakerOn && window.speechSynthesis) {
+        window.speechSynthesis.cancel();
       }
-      obj[h] = v; 
-    });
-    return obj;
-  });
-}
+      if (STATE.speakerOn) speak("소리가 켜졌어요!");
+    }
 
-// ============================================================
-//  학습 결과 저장
-// ============================================================
-function saveResult(payload) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const sheet = ss.getSheetByName(SHEET_NAMES.RESULTS);
-  sheet.appendRow([
-    new Date(),
-    payload.studentId || '',
-    payload.studentName || '',
-    payload.activity1Score || 0,
-    payload.activity2Score || 0,
-    payload.activity3Score || 0,
-    payload.activity4Count || 0,
-    payload.selfRating || 0,
-    payload.retryCount || 0,
-    payload.totalSeconds || 0
-  ]);
-  return {};
-}
+    function speak(text, rate = 0.95, pitch = 1.1) {
+      if (!STATE.speakerOn) return;
+      if (!window.speechSynthesis || !text) return;
+      const synth = window.speechSynthesis;
+      if (synth.speaking) synth.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      const setVoice = () => {
+        const voices = synth.getVoices();
+        let voice = voices.find(v => v.lang === 'ko-KR' && v.name.includes('Google'));
+        if (!voice) voice = voices.find(v => v.lang === 'ko-KR');
+        if (voice) u.voice = voice;
+      };
+      if (synth.getVoices().length === 0) {
+        window.speechSynthesis.onvoiceschanged = setVoice;
+      } else { setVoice(); }
+      u.rate = rate; u.pitch = pitch; u.lang = 'ko-KR';
+      synth.speak(u);
+    }
 
-// ============================================================
-//  녹음 파일 저장 (Drive + Sheets)
-// ============================================================
-function saveRecording(payload) {
-  let driveUrl = '';
-  
-  // Drive에 음성 파일 저장
-  if (payload.audioBase64 && payload.audioBase64.length > 0) {
-    const folder = getOrCreateFolder(DRIVE_FOLDER_NAME);
-    const decoded = Utilities.base64Decode(payload.audioBase64);
-    const mimeType = payload.mimeType || 'audio/webm';
-    const ext = mimeType.split('/')[1].split(';')[0];
-    const safeName = (payload.studentName || 'unknown').replace(/[^\w가-힣]/g, '');
-    const fileName = `${payload.studentId || 'X'}_${safeName}_${payload.phase}_${payload.questionId}_${new Date().getTime()}.${ext}`;
-    const blob = Utilities.newBlob(decoded, mimeType, fileName);
-    const file = folder.createFile(blob);
-    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-    driveUrl = file.getUrl();
-  }
-  
-  // Sheet에 텍스트 + URL 기록
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const sheet = ss.getSheetByName(SHEET_NAMES.RECORDINGS);
-  sheet.appendRow([
-    new Date(),
-    payload.studentId || '',
-    payload.studentName || '',
-    payload.phase === 'pre' ? '사전' : '사후',
-    payload.questionId || '',
-    payload.question || '',
-    payload.transcript || '',
-    driveUrl
-  ]);
-  
-  return { driveUrl: driveUrl };
-}
+    let audioCtx = null;
+    function getAudioCtx() {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      return audioCtx;
+    }
+    function playSfx(type) {
+      if (!STATE.speakerOn) return;
+      try {
+        const ctx = getAudioCtx();
+        if (ctx.state === 'suspended') ctx.resume();
+        const now = ctx.currentTime;
+        if (type === 'correct') {
+          [523.25, 659.25, 783.99].forEach((freq, i) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sine'; osc.frequency.value = freq;
+            osc.connect(gain); gain.connect(ctx.destination);
+            const t = now + i * 0.1;
+            gain.gain.setValueAtTime(0, t);
+            gain.gain.linearRampToValueAtTime(0.2, t + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
+            osc.start(t); osc.stop(t + 0.3);
+          });
+        } else if (type === 'wrong') {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'square';
+          osc.frequency.setValueAtTime(220, now);
+          osc.frequency.linearRampToValueAtTime(150, now + 0.3);
+          osc.connect(gain); gain.connect(ctx.destination);
+          gain.gain.setValueAtTime(0.15, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+          osc.start(now); osc.stop(now + 0.4);
+        } else if (type === 'success') {
+          [523.25, 659.25, 783.99, 1046.5].forEach((freq, i) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'triangle'; osc.frequency.value = freq;
+            osc.connect(gain); gain.connect(ctx.destination);
+            const t = now + i * 0.08;
+            gain.gain.setValueAtTime(0, t);
+            gain.gain.linearRampToValueAtTime(0.25, t + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
+            osc.start(t); osc.stop(t + 0.5);
+          });
+        } else if (type === 'click') {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine'; osc.frequency.value = 800;
+          osc.connect(gain); gain.connect(ctx.destination);
+          gain.gain.setValueAtTime(0.1, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+          osc.start(now); osc.stop(now + 0.1);
+        }
+      } catch (e) { console.log('SFX error:', e); }
+    }
 
-function getOrCreateFolder(name) {
-  const folders = DriveApp.getFoldersByName(name);
-  if (folders.hasNext()) return folders.next();
-  return DriveApp.createFolder(name);
-}
+    function fireConfetti() {
+      const canvas = document.getElementById('confetti-canvas');
+      if (!canvas) return;
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      const ctx = canvas.getContext('2d');
+      const colors = ['#FBBF24', '#EC4899', '#10B981', '#6366F1', '#F97316', '#8B5CF6'];
+      const particles = [];
+      for (let i = 0; i < 100; i++) {
+        particles.push({
+          x: canvas.width / 2, y: canvas.height / 2,
+          vx: (Math.random() - 0.5) * 16,
+          vy: (Math.random() - 0.7) * 16,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          size: Math.random() * 8 + 4,
+          rotation: Math.random() * 360,
+          vRot: (Math.random() - 0.5) * 10,
+          opacity: 1
+        });
+      }
+      let frame = 0;
+      function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        particles.forEach(p => {
+          p.x += p.vx; p.y += p.vy; p.vy += 0.4;
+          p.rotation += p.vRot; p.opacity -= 0.012;
+          if (p.opacity <= 0) return;
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate(p.rotation * Math.PI / 180);
+          ctx.globalAlpha = Math.max(0, p.opacity);
+          ctx.fillStyle = p.color;
+          ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+          ctx.restore();
+        });
+        frame++;
+        if (frame < 100) requestAnimationFrame(animate);
+        else ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+      animate();
+    }
 
-// ============================================================
-//  메뉴
-// ============================================================
-function onOpen() {
-  SpreadsheetApp.getUi()
-    .createMenu('🔍 분류박물관')
-    .addItem('① 시트 셋업', 'setupSheets')
-    .addItem('② 웹앱 URL 보기', 'showWebAppUrl')
-    .addItem('③ 연결 테스트', 'testConnection')
-    .addSeparator()
-    .addItem('학습결과 시트 비우기', 'clearResults')
-    .addItem('녹음기록 시트 비우기', 'clearRecordings')
-    .addToUi();
-}
+    // ================================================
+    //  아이콘
+    // ================================================
+    const ICONS = {
+      speakerOn: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>',
+      speakerOff: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>',
+      arrow: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>',
+      mic: '<svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor"><path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/><path d="M17.3 11c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/></svg>',
+      stop: '<svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>',
+      retry: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>',
+      trophy: '<svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4V2h10v2h4v3a4 4 0 0 1-4 4h-.34a6.96 6.96 0 0 1-3.66 4.32V18h3v3H8v-3h3v-2.68A6.96 6.96 0 0 1 7.34 11H7a4 4 0 0 1-4-4V4h4zm0 2H5v1a2 2 0 0 0 2 2V6zm10 0v3a2 2 0 0 0 2-2V6h-2z"/></svg>',
+      edit: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>',
+      wand: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4V2"/><path d="M15 16v-2"/><path d="M8 9h2"/><path d="M20 9h2"/><path d="M3 21l9-9"/></svg>'
+    };
 
-function showWebAppUrl() {
-  const url = ScriptApp.getService().getUrl();
-  if (!url) {
-    SpreadsheetApp.getUi().alert(
-      '⚠️ 아직 배포가 안 됐어요.\n\n' +
-      '우측 상단 [배포] → [새 배포] → 톱니바퀴 → [웹 앱]\n' +
-      '액세스: 모든 사용자\n실행: 나\n\n' +
-      '배포 후 다시 눌러보세요.'
-    );
-  } else {
-    SpreadsheetApp.getUi().alert('🔗 웹앱 URL:\n\n' + url + '\n\n이 URL을 Claude에게 알려주세요.');
-  }
-}
+    // ================================================
+    //  마스코트 SVG
+    // ================================================
+    function FairySvg(mood = 'happy', size = 80) {
+      const mouth = mood === 'happy' 
+        ? '<path d="M55 75 Q60 80 65 75" stroke="white" stroke-width="2.5" stroke-linecap="round" fill="none"/>'
+        : mood === 'sad'
+        ? '<path d="M55 80 Q60 75 65 80" stroke="white" stroke-width="2.5" stroke-linecap="round" fill="none"/>'
+        : '<path d="M55 78 L65 78" stroke="white" stroke-width="2.5" stroke-linecap="round"/>';
+      return `
+        <svg width="${size}" height="${size * 1.2}" viewBox="0 0 120 150" fill="none" style="animation: float 2.5s ease-in-out infinite;">
+          <defs>
+            <linearGradient id="fairyBody-${size}" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#818CF8"/>
+              <stop offset="100%" stop-color="#6366F1"/>
+            </linearGradient>
+          </defs>
+          <ellipse cx="60" cy="135" rx="22" ry="4" fill="#000" opacity="0.1"/>
+          <path d="M40 50 Q60 30 80 50 L80 110 Q60 125 40 110 Z" fill="url(#fairyBody-${size})" stroke="#4338CA" stroke-width="3"/>
+          <path d="M30 60 Q15 50 20 80 Q15 100 35 95" fill="#C7D2FE" opacity="0.85" stroke="#6366F1" stroke-width="2"/>
+          <path d="M90 60 Q105 50 100 80 Q105 100 85 95" fill="#C7D2FE" opacity="0.85" stroke="#6366F1" stroke-width="2"/>
+          <circle cx="52" cy="62" r="3.5" fill="white"/>
+          <circle cx="68" cy="62" r="3.5" fill="white"/>
+          <circle cx="52" cy="62" r="1.5" fill="#1E293B"/>
+          <circle cx="68" cy="62" r="1.5" fill="#1E293B"/>
+          ${mouth}
+          <circle cx="60" cy="40" r="6" fill="#FBBF24" stroke="#F59E0B" stroke-width="2"/>
+          <path d="M60 25 L62 35 L60 32 L58 35 Z" fill="#FBBF24"/>
+        </svg>
+      `;
+    }
 
-function testConnection() {
-  const ui = SpreadsheetApp.getUi();
-  try {
-    const data = getAllData();
-    const counts = Object.entries(data).map(([k, v]) => `• ${k}: ${v.length}개`).join('\n');
-    ui.alert('✅ 연결 정상!\n\n' + counts);
-  } catch (err) {
-    ui.alert('❌ 오류:\n\n' + err.toString());
-  }
-}
+    function BlockSvg(block, sizePx = 56) {
+      const colorMap = { red: '#EF4444', blue: '#3B82F6', yellow: '#FBBF24', green: '#10B981' };
+      const strokeMap = { red: '#B91C1C', blue: '#1D4ED8', yellow: '#D97706', green: '#047857' };
+      const isBig = block.크기 === 'big' || block.size === 'big';
+      const renderSize = isBig ? sizePx : sizePx * 0.65;
+      const color = block.색깔 || block.color;
+      const shape = block.모양 || block.shape;
+      const fill = colorMap[color], stroke = strokeMap[color];
+      let svgInner = '';
+      if (shape === 'circle') svgInner = `<circle cx="30" cy="30" r="25" fill="${fill}" stroke="${stroke}" stroke-width="3"/>`;
+      if (shape === 'square') svgInner = `<rect x="7" y="7" width="46" height="46" rx="3" fill="${fill}" stroke="${stroke}" stroke-width="3"/>`;
+      if (shape === 'triangle') svgInner = `<polygon points="30,8 54,52 6,52" fill="${fill}" stroke="${stroke}" stroke-width="3" stroke-linejoin="round"/>`;
+      return `<svg class="block-svg" width="${renderSize}" height="${renderSize}" viewBox="0 0 60 60">${svgInner}</svg>`;
+    }
 
-function clearResults() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const sheet = ss.getSheetByName(SHEET_NAMES.RESULTS);
-  if (sheet.getLastRow() > 1) {
-    sheet.getRange(2, 1, sheet.getLastRow() - 1, sheet.getLastColumn()).clearContent();
-  }
-  SpreadsheetApp.getUi().alert('학습결과 시트를 비웠어요.');
-}
+    // ================================================
+    //  공통 컴포넌트
+    // ================================================
+    function renderHeader(opts) {
+      const { number, title, criterionLabel, fixed } = opts;
+      return `
+        <div class="activity-header">
+          <span class="activity-badge">활동 ${number}</span>
+          <h2 class="activity-title">${title}</h2>
+          ${criterionLabel ? `
+            <div class="criterion-box">
+              <span class="criterion-label">분류 기준</span>
+              <span class="criterion-value">${criterionLabel}</span>
+              ${fixed ? '<span class="criterion-lock">🔒</span>' : ''}
+            </div>
+          ` : ''}
+          <button class="speaker-toggle ${STATE.speakerOn ? 'on' : ''}" onclick="toggleSpeaker()">
+            ${STATE.speakerOn ? ICONS.speakerOn : ICONS.speakerOff}
+          </button>
+        </div>
+      `;
+    }
 
-function clearRecordings() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const sheet = ss.getSheetByName(SHEET_NAMES.RECORDINGS);
-  if (sheet.getLastRow() > 1) {
-    sheet.getRange(2, 1, sheet.getLastRow() - 1, sheet.getLastColumn()).clearContent();
-  }
-  SpreadsheetApp.getUi().alert('녹음기록 시트를 비웠어요.');
-}
+    function renderTutorial(text) {
+      return `
+        <div class="tutorial-banner">
+          <span class="tutorial-icon">💡</span>
+          <span class="tutorial-text">${text}</span>
+        </div>
+      `;
+    }
+
+    function renderFeedback(text, mood = 'thinking') {
+      return `
+        <div class="feedback-area" id="feedback-area">
+          ${FairySvg(mood, 44)}
+          <p class="feedback-text ${mood}">${text}</p>
+        </div>
+      `;
+    }
+
+    function updateFeedback(text, mood = 'thinking') {
+      const area = document.getElementById('feedback-area');
+      if (!area) return;
+      area.innerHTML = `${FairySvg(mood, 44)}<p class="feedback-text ${mood}">${text}</p>`;
+    }
+
+    function showModal(html) {
+      const backdrop = document.createElement('div');
+      backdrop.className = 'modal-backdrop';
+      backdrop.innerHTML = `<div class="modal-content">${html}</div>`;
+      document.body.appendChild(backdrop);
+      return backdrop;
+    }
+
+    function closeModal() {
+      document.querySelectorAll('.modal-backdrop').forEach(m => m.remove());
+    }
+
+    function showScreen(html) {
+      document.getElementById('app').innerHTML = `<div class="screen">${html}</div>`;
+    }
+
+    function shuffle(arr) {
+      return [...arr].sort(() => Math.random() - 0.5);
+    }
+
+    // ================================================
+    //  드래그 시스템
+    // ================================================
+    function makeDraggable(element, onDrop) {
+      let isDragging = false;
+      let offsetX, offsetY;
+      let placeholder;
+      
+      function getEvent(e) {
+        if (e.touches) return e.touches[0] || e.changedTouches[0];
+        return e;
+      }
+      function start(e) {
+        const evt = getEvent(e);
+        isDragging = true;
+        const rect = element.getBoundingClientRect();
+        offsetX = evt.clientX - rect.left;
+        offsetY = evt.clientY - rect.top;
+        placeholder = element.cloneNode(true);
+        placeholder.style.visibility = 'hidden';
+        element.parentNode.insertBefore(placeholder, element);
+        element.style.position = 'fixed';
+        element.style.zIndex = '1000';
+        element.style.left = rect.left + 'px';
+        element.style.top = rect.top + 'px';
+        element.style.width = rect.width + 'px';
+        element.classList.add('dragging');
+        e.preventDefault();
+      }
+      function move(e) {
+        if (!isDragging) return;
+        const evt = getEvent(e);
+        element.style.left = (evt.clientX - offsetX) + 'px';
+        element.style.top = (evt.clientY - offsetY) + 'px';
+        document.querySelectorAll('.drop-bin').forEach(z => z.classList.remove('drag-over'));
+        const dropZone = findDropZoneAt(evt.clientX, evt.clientY);
+        if (dropZone) dropZone.classList.add('drag-over');
+        e.preventDefault();
+      }
+      function end(e) {
+        if (!isDragging) return;
+        isDragging = false;
+        const evt = getEvent(e);
+        document.querySelectorAll('.drop-bin').forEach(z => z.classList.remove('drag-over'));
+        const dropZone = findDropZoneAt(evt.clientX, evt.clientY);
+        element.style.position = '';
+        element.style.zIndex = '';
+        element.style.left = '';
+        element.style.top = '';
+        element.style.width = '';
+        element.classList.remove('dragging');
+        if (placeholder) { placeholder.remove(); placeholder = null; }
+        if (dropZone && onDrop) onDrop(dropZone.id, dropZone);
+      }
+      function findDropZoneAt(x, y) {
+        const elements = document.elementsFromPoint(x, y);
+        return elements.find(el => el.classList && el.classList.contains('drop-bin'));
+      }
+      element.addEventListener('mousedown', start);
+      element.addEventListener('touchstart', start, { passive: false });
+      document.addEventListener('mousemove', move);
+      document.addEventListener('touchmove', move, { passive: false });
+      document.addEventListener('mouseup', end);
+      document.addEventListener('touchend', end);
+    }
+
+    // ================================================
+    //  화면들
+    // ================================================
+    function screenIntro() {
+      showScreen(`
+        <div style="flex:1; display:flex; align-items:center; justify-content:center;">
+          <div class="intro-card">
+            ${FairySvg('happy', 110)}
+            <h1 class="intro-title">🔍 창의 분류 박물관</h1>
+            <p class="intro-subtitle">같은 점을 찾아 모으고,<br/><strong style="color:var(--c-primary)">분류 기준</strong>을 정해 나누어 봐요!</p>
+            <div class="intro-grid">
+              <div class="intro-card-mini c1">① 학용품 분류</div>
+              <div class="intro-card-mini c2">② 동물 분류</div>
+              <div class="intro-card-mini c3">③ 기준 찾기</div>
+              <div class="intro-card-mini c4">④ 자유 분류</div>
+            </div>
+            <button class="btn-main" onclick="screenStudentSelect()">탐험 시작하기 🚀</button>
+          </div>
+        </div>
+      `);
+    }
+
+    function screenStudentSelect() {
+      playSfx('click');
+      const students = STATE.data.students || [];
+      const avatars = ['🐻','🐰','🐼','🦊','🐯','🐶','🐱','🐹','🦁','🐮','🐷','🐸','🐧','🦄','🐙'];
+      
+      showScreen(`
+        ${renderTutorial('<strong>내 이름을 찾아 눌러주세요!</strong> 학습 결과가 자동으로 저장돼요.')}
+        <div style="flex:1; display:flex; flex-direction:column; gap:12px; min-height:0;">
+          <div class="student-grid">
+            ${students.map((s, i) => `
+              <button class="student-card" onclick="selectStudent('${s.학번}', ${JSON.stringify(s.이름)}, ${JSON.stringify(s.반 || '')})">
+                <div class="avatar">${avatars[i % avatars.length]}</div>
+                <div class="name">${s.이름}</div>
+                <div class="meta">${s.반 ? s.반 + ' / ' : ''}${s.학번}번</div>
+              </button>
+            `).join('')}
+          </div>
+        </div>
+        <div style="display:flex; justify-content:center; flex-shrink:0;">
+          <button class="speaker-toggle ${STATE.speakerOn ? 'on' : ''}" onclick="toggleSpeaker()">
+            ${STATE.speakerOn ? ICONS.speakerOn : ICONS.speakerOff}
+          </button>
+        </div>
+      `);
+      
+      if (students.length === 0) {
+        showModal(`
+          <div style="font-size:60px;">⚠️</div>
+          <h2 class="modal-title">학생 명단이 비어있어요</h2>
+          <p class="modal-body">구글 시트의 <strong>학생명단</strong> 시트에 학생을 추가해 주세요.</p>
+          <button class="btn-secondary" onclick="closeModal()">확인</button>
+        `);
+      }
+    }
+
+    function selectStudent(id, name, cls) {
+      playSfx('click');
+      STATE.studentId = id;
+      STATE.studentName = name;
+      STATE.studentClass = cls;
+      STATE.startTime = Date.now();
+      screenWelcomeTutorial();
+    }
+
+    function screenWelcomeTutorial() {
+      showScreen(`
+        <div style="flex:1; display:flex; align-items:center; justify-content:center; overflow-y:auto;">
+          <div class="intro-card">
+            <div style="font-size:60px;">👋</div>
+            <h1 class="intro-title">${STATE.studentName} 친구!<br/>안녕하세요</h1>
+            <p class="intro-subtitle">오늘은 <strong style="color:var(--c-primary)">"분류"</strong>를 배워볼 거예요.<br/>
+              아래 순서대로 활동을 진행할게요!</p>
+            <div style="background:#F0F9FF; border:3px solid #BAE6FD; border-radius:20px; padding:16px; margin-bottom:20px; text-align:left;">
+              <div style="margin-bottom:10px; font-family:var(--font-display); font-size:clamp(15px, 2vh, 18px); color:#0C4A6E;">📚 오늘의 학습 순서</div>
+              <ol style="padding-left:20px; font-family:var(--font-body); font-size:clamp(13px, 1.8vh, 16px); line-height:1.8; color:var(--c-text);">
+                <li>🎤 <strong>학습 전 말하기</strong></li>
+                <li>📦 활동 1 - 학용품 분류</li>
+                <li>🦓 활동 2 - 동물 분류</li>
+                <li>🎯 활동 3 - 분류 기준 찾기</li>
+                <li>🧱 활동 4 - 내가 정한 기준으로 분류</li>
+                <li>🎤 <strong>학습 후 말하기</strong></li>
+                <li>⭐ 자기평가 + 임명장</li>
+              </ol>
+            </div>
+            <button class="btn-main" onclick="screenPreRecord(0)">시작할게요!</button>
+          </div>
+        </div>
+      `);
+    }
+
+    // ================================================
+    //  녹음 화면
+    // ================================================
+    let mediaRecorder = null;
+    let recordedChunks = [];
+    let speechRecognition = null;
+    let currentTranscript = '';
+
+    function screenPreRecord(idx) { recordView('pre', idx); }
+    function screenPostRecord(idx) { recordView('post', idx); }
+
+    function recordView(phase, idx) {
+      const questions = phase === 'pre' ? (STATE.data.preQuestions || []) : (STATE.data.postQuestions || []);
+      if (questions.length === 0 || idx >= questions.length) {
+        if (phase === 'pre') screenActivity1();
+        else screenSelfRating();
+        return;
+      }
+      const q = questions[idx];
+      window._currentQuestion = q;
+      const phaseLabel = phase === 'pre' ? '학습 전' : '학습 후';
+      const phaseColor = phase === 'pre' ? '#F97316' : '#8B5CF6';
+      
+      showScreen(`
+        ${renderTutorial(`<strong>🎤 ${phaseLabel} 말하기</strong> - 마이크 버튼을 눌러 녹음하고, 끝나면 다시 눌러 멈춰요. 1분 이내로 말해주세요.`)}
+        <div style="flex:1; display:flex; align-items:center; justify-content:center; overflow-y:auto;">
+          <div class="record-card">
+            <div style="display:inline-block; background:${phaseColor}; color:white; padding:6px 16px; border-radius:999px; font-family:var(--font-display); font-size:clamp(13px, 1.8vh, 16px); margin-bottom:12px;">
+              ${phaseLabel} 질문 ${idx + 1} / ${questions.length}
+            </div>
+            <div class="record-question">💭 ${q.질문}</div>
+            <button id="record-btn" class="record-button" onclick="toggleRecording('${phase}', ${idx})">
+              ${ICONS.mic}
+            </button>
+            <div class="record-status" id="record-status">마이크 버튼을 눌러 녹음을 시작하세요</div>
+            <div class="transcript-box" id="transcript-box">
+              <span class="transcript-empty">여기에 내 말이 글로 보여요...</span>
+            </div>
+            <div style="display:flex; gap:8px; margin-top:16px; justify-content:center; flex-wrap:wrap;">
+              <button class="btn-secondary" onclick="skipRecording('${phase}', ${idx})">건너뛰기</button>
+              <button id="save-btn" class="btn-main" style="display:none; max-width:240px;" onclick="saveAndNext('${phase}', ${idx})">
+                저장하고 계속 ${ICONS.arrow}
+              </button>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex; justify-content:center; flex-shrink:0;">
+          <button class="speaker-toggle ${STATE.speakerOn ? 'on' : ''}" onclick="toggleSpeaker()">
+            ${STATE.speakerOn ? ICONS.speakerOn : ICONS.speakerOff}
+          </button>
+        </div>
+      `);
+      speak(q.질문);
+    }
+
+    async function toggleRecording(phase, idx) {
+      const btn = document.getElementById('record-btn');
+      const status = document.getElementById('record-status');
+      const transcriptBox = document.getElementById('transcript-box');
+      const saveBtn = document.getElementById('save-btn');
+      
+      if (mediaRecorder && mediaRecorder.state === 'recording') {
+        mediaRecorder.stop();
+        if (speechRecognition) { try { speechRecognition.stop(); } catch(e) {} }
+        btn.classList.remove('recording');
+        btn.innerHTML = ICONS.mic;
+        status.textContent = '녹음이 끝났어요. 저장하고 계속하세요!';
+        saveBtn.style.display = 'inline-flex';
+        playSfx('click');
+        return;
+      }
+      
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        recordedChunks = [];
+        currentTranscript = '';
+        const mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4';
+        mediaRecorder = new MediaRecorder(stream, { mimeType });
+        mediaRecorder.ondataavailable = (e) => {
+          if (e.data.size > 0) recordedChunks.push(e.data);
+        };
+        mediaRecorder.onstop = () => stream.getTracks().forEach(t => t.stop());
+        mediaRecorder.start();
+        
+        btn.classList.add('recording');
+        btn.innerHTML = ICONS.stop;
+        status.textContent = '🔴 녹음 중... 자유롭게 말해보세요!';
+        transcriptBox.innerHTML = '<span class="transcript-empty">듣고 있어요...</span>';
+        saveBtn.style.display = 'none';
+        playSfx('click');
+        
+        const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (SpeechRec) {
+          speechRecognition = new SpeechRec();
+          speechRecognition.lang = 'ko-KR';
+          speechRecognition.continuous = true;
+          speechRecognition.interimResults = true;
+          speechRecognition.onresult = (event) => {
+            let interim = '', final = '';
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+              if (event.results[i].isFinal) final += event.results[i][0].transcript;
+              else interim += event.results[i][0].transcript;
+            }
+            if (final) currentTranscript += final + ' ';
+            const display = currentTranscript + (interim ? ` <em style="color:#94A3B8;">${interim}</em>` : '');
+            transcriptBox.innerHTML = display || '<span class="transcript-empty">듣고 있어요...</span>';
+          };
+          speechRecognition.onerror = (e) => console.log('STT:', e.error);
+          try { speechRecognition.start(); } catch(e) {}
+        } else {
+          transcriptBox.innerHTML = '<span class="transcript-empty">⚠️ 이 브라우저는 음성 인식을 지원하지 않아요. (Chrome/Edge 권장)</span>';
+        }
+      } catch (err) {
+        status.textContent = '⚠️ 마이크 권한이 필요해요.';
+        showModal(`
+          <div style="font-size:60px;">🎤</div>
+          <h2 class="modal-title">마이크 권한이 필요해요</h2>
+          <p class="modal-body">브라우저 주소창의 자물쇠를 눌러 마이크를 허용해 주세요.</p>
+          <button class="btn-secondary" onclick="closeModal()">확인</button>
+        `);
+      }
+    }
+
+    function skipRecording(phase, idx) {
+      playSfx('click');
+      recordView(phase, idx + 1);
+    }
+
+    async function saveAndNext(phase, idx) {
+      playSfx('click');
+      const q = window._currentQuestion;
+      if (!q || recordedChunks.length === 0) {
+        skipRecording(phase, idx);
+        return;
+      }
+      
+      const saveBtn = document.getElementById('save-btn');
+      saveBtn.textContent = '저장 중...';
+      saveBtn.disabled = true;
+      
+      const blob = new Blob(recordedChunks, { type: mediaRecorder.mimeType });
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const base64 = reader.result.split(',')[1];
+        try {
+          await gasPost({
+            action: 'saveRecording',
+            studentId: STATE.studentId,
+            studentName: STATE.studentName,
+            phase: phase,
+            questionId: q.ID,
+            question: q.질문,
+            transcript: currentTranscript,
+            audioBase64: base64,
+            mimeType: mediaRecorder.mimeType
+          });
+          if (phase === 'pre') STATE.preRecordings.push({ qId: q.ID, transcript: currentTranscript });
+          else STATE.postRecordings.push({ qId: q.ID, transcript: currentTranscript });
+        } catch (err) {
+          console.error('저장 실패:', err);
+        }
+        recordView(phase, idx + 1);
+      };
+      reader.readAsDataURL(blob);
+    }
+
+    // ================================================
+    //  활동 1, 2 (고정 기준 분류)
+    // ================================================
+    function screenActivity1() {
+      fixedSortActivity({
+        number: 1,
+        title: '📦 학용품 분류하기',
+        criterionLabel: '쓰임새 / 종류',
+        tutorial: '학용품을 같은 종류끼리 모아볼까요? <strong>친구들을 끌어다 알맞은 칸에 넣어주세요.</strong>',
+        items: STATE.data.activity1 || [],
+        onComplete: () => screenActivity2()
+      });
+    }
+
+    function screenActivity2() {
+      fixedSortActivity({
+        number: 2,
+        title: '🦓 동물 분류하기',
+        criterionLabel: '다리의 수',
+        tutorial: '<strong>다리가 몇 개인지 잘 살펴보세요!</strong> 0개, 2개, 4개로 나뉘어요.',
+        items: STATE.data.activity2 || [],
+        onComplete: () => screenActivity3()
+      });
+    }
+
+    function fixedSortActivity({ number, title, criterionLabel, tutorial, items, onComplete }) {
+      const seen = new Set();
+      const bins = [];
+      items.forEach(it => {
+        const id = String(it.분류기준ID);
+        if (!seen.has(id)) {
+          seen.add(id);
+          bins.push({ id: id, label: it.분류기준라벨 });
+        }
+      });
+      bins.sort((a, b) => {
+        const an = parseInt(a.id), bn = parseInt(b.id);
+        if (!isNaN(an) && !isNaN(bn)) return an - bn;
+        return a.label.localeCompare(b.label);
+      });
+      const binColors = ['amber', 'rose', 'sky', 'emerald', 'violet', 'orange'];
+      bins.forEach((b, i) => b.color = binColors[i % binColors.length]);
+      
+      let activeItems = shuffle(items.map(it => ({
+        id: it.ID, icon: it.아이콘, name: it.이름, type: String(it.분류기준ID)
+      })));
+      let correctCount = 0;
+      const totalCount = activeItems.length;
+      
+      function render() {
+        showScreen(`
+          ${renderHeader({ number, title, criterionLabel, fixed: true })}
+          ${renderTutorial(tutorial)}
+          ${renderFeedback('아이템을 끌어다 분류해 보세요!', 'thinking')}
+          <div class="sort-main">
+            <div class="item-tray" id="item-tray">
+              <span class="tray-label">📦 분류할 친구들 (${activeItems.length})</span>
+              <div class="tray-items" id="tray-items"></div>
+            </div>
+            <div class="bins-column" style="--bin-count:${bins.length}">
+              ${bins.map(b => `
+                <div class="drop-bin bin-${b.color}" id="${b.id}">
+                  <div class="bin-label-row">
+                    <span class="bin-label">${b.label}</span>
+                    <span class="bin-count" id="count-${b.id}">(0)</span>
+                  </div>
+                  <div class="bin-items" id="items-${b.id}"></div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `);
+        renderItems();
+      }
+      
+      function renderItems() {
+        const tray = document.getElementById('tray-items');
+        if (!tray) return;
+        tray.innerHTML = '';
+        activeItems.forEach(item => {
+          const el = document.createElement('div');
+          el.className = 'draggable-item';
+          el.innerHTML = `<span class="item-icon">${item.icon}</span><span class="item-name">${item.name}</span>`;
+          tray.appendChild(el);
+          makeDraggable(el, (binId) => handleDrop(item, binId, el));
+        });
+        const trayLabel = document.querySelector('.tray-label');
+        if (trayLabel) trayLabel.textContent = `📦 분류할 친구들 (${activeItems.length})`;
+      }
+      
+      function handleDrop(item, binId, itemEl) {
+        if (item.type === binId) {
+          activeItems = activeItems.filter(i => i.id !== item.id);
+          correctCount++;
+          const itemsContainer = document.getElementById('items-' + binId);
+          const placed = document.createElement('div');
+          placed.className = 'bin-item';
+          placed.innerHTML = `<span class="bin-item-icon">${item.icon}</span><span class="bin-item-name">${item.name}</span>`;
+          itemsContainer.appendChild(placed);
+          const countEl = document.getElementById('count-' + binId);
+          if (countEl) countEl.textContent = `(${itemsContainer.children.length})`;
+          itemEl.remove();
+          renderItems();
+          updateFeedback(`${item.name} 정답이에요! 잘했어요!`, 'happy');
+          playSfx('correct');
+          speak(`${item.name} 정답이에요!`);
+          
+          if (activeItems.length === 0) {
+            setTimeout(() => {
+              updateFeedback('🎉 와! 모두 잘 분류했어요!', 'happy');
+              playSfx('success');
+              speak('와! 모두 잘 분류했어요!');
+              fireConfetti();
+              STATE.scores[`a${number}`] = Math.round(correctCount / totalCount * 100);
+              window._activityNext = onComplete;
+              const tray = document.getElementById('tray-items');
+              tray.innerHTML = `
+                <button class="btn-main" style="max-width:280px;" onclick="window._activityNext()">
+                  다음 활동으로 ${ICONS.arrow}
+                </button>
+              `;
+            }, 600);
+          }
+        } else {
+          updateFeedback(`${item.name}은(는) 다른 곳이 더 어울려요!`, 'sad');
+          playSfx('wrong');
+          speak(`${item.name}은 다른 곳이 더 어울려요`);
+        }
+      }
+      render();
+    }
+
+    // ================================================
+    //  활동 3
+    // ================================================
+    function screenActivity3() {
+      const opts = STATE.data.activity3 || [];
+      const correctIds = opts.filter(o => o.정답여부 === true).map(o => o.ID);
+      let selected = [];
+      const blocksPreview = (STATE.data.activity4Blocks || [])
+        .map(b => BlockSvg(b, 36)).join('');
+      
+      function render() {
+        showScreen(`
+          ${renderHeader({ number: 3, title: '🎯 올바른 분류 기준 찾기', criterionLabel: null, fixed: false })}
+          ${renderTutorial('<strong>이 블록들을 어떻게 나눌까요?</strong> 누가 봐도 똑같이 나눌 수 있는 기준을 <strong>모두</strong> 골라보세요!')}
+          <div style="background:white; border:3px solid var(--c-primary-light); border-radius:18px; padding:10px; flex-shrink:0;">
+            <div style="text-align:center; font-family:var(--font-display); font-size:clamp(13px, 1.8vh, 16px); color:var(--c-text-light); margin-bottom:6px;">🧱 분류할 블록</div>
+            <div style="display:flex; justify-content:center; gap:6px; flex-wrap:wrap;">${blocksPreview}</div>
+          </div>
+          ${renderFeedback('어떤 기준이 좋을까요?', 'thinking')}
+          <div class="choice-grid">
+            ${opts.map(o => `
+              <button class="choice-card" id="opt-${o.ID}" onclick="handleChoice('${o.ID}')">
+                <span class="choice-icon">${o.아이콘}</span>
+                <span class="choice-text">${o.보기}</span>
+              </button>
+            `).join('')}
+          </div>
+          <div id="next-area" style="display:none; flex-shrink:0;">
+            <div style="background:#ECFDF5; border:3px solid #6EE7B7; border-radius:16px; padding:12px; margin-bottom:10px; text-align:center;">
+              <div style="font-family:var(--font-display); font-size:clamp(15px, 2.2vh, 19px); color:#065F46;">
+                ✨ 분류 기준은 <strong style="text-decoration:underline;">누가 분류해도 결과가 같아야</strong> 해요!
+              </div>
+            </div>
+            <button class="btn-main" onclick="screenActivity4()">다음 활동으로 ${ICONS.arrow}</button>
+          </div>
+        `);
+      }
+      
+      window.handleChoice = (optId) => {
+        const opt = opts.find(o => String(o.ID) === String(optId));
+        if (!opt || selected.includes(optId)) return;
+        if (opt.정답여부 === true) {
+          selected.push(optId);
+          const card = document.getElementById('opt-' + optId);
+          if (card) card.classList.add('selected');
+          updateFeedback(opt.피드백, 'happy');
+          playSfx('correct');
+          speak(opt.피드백);
+          if (correctIds.every(id => selected.includes(id))) {
+            STATE.scores.a3 = 100;
+            playSfx('success');
+            fireConfetti();
+            document.getElementById('next-area').style.display = 'block';
+          }
+        } else {
+          updateFeedback(opt.피드백, 'sad');
+          playSfx('wrong');
+          speak(opt.피드백);
+        }
+      };
+      render();
+    }
+
+    // ================================================
+    //  활동 4
+    // ================================================
+    const PRESET_CRITERIA = {
+      color: { label: '색깔', icon: '🎨', binLabels: { red: '빨강', blue: '파랑', yellow: '노랑', green: '초록' } },
+      shape: { label: '모양', icon: '🔷', binLabels: { circle: '동그라미', square: '네모', triangle: '세모' } },
+      size: { label: '크기', icon: '📏', binLabels: { big: '큰 것', small: '작은 것' } }
+    };
+    let a4State = null;
+
+    function screenActivity4() {
+      a4State = {
+        setupDone: false,
+        presetKey: null,
+        autoBins: true,
+        criterion: '',
+        bins: [
+          { id: 'b1', label: '', items: [] },
+          { id: 'b2', label: '', items: [] },
+          { id: 'b3', label: '', items: [] },
+          { id: 'b4', label: '', items: [] }
+        ],
+        completedRounds: 0
+      };
+      renderA4Setup();
+    }
+
+    function renderA4Setup() {
+      const blocks = STATE.data.activity4Blocks || [];
+      const blocksPreview = blocks.map(b => BlockSvg(b, 36)).join('');
+      
+      showScreen(`
+        ${renderHeader({ number: 4, title: '🧱 기준을 정해 분류하기', criterionLabel: null, fixed: false })}
+        ${renderTutorial(`<strong>STEP 1·2를 채우고 시작!</strong> 직접 적거나, 추천 버튼을 눌러도 돼요.${a4State.completedRounds > 0 ? ' <strong style="color:#7C3AED;">기준이 다르면 결과도 다른지 살펴봐요!</strong>' : ''}`)}
+        <div style="flex:1; display:flex; flex-direction:column; gap:10px; overflow-y:auto; padding:4px;">
+          <div style="background:white; border:3px solid var(--c-primary-light); border-radius:18px; padding:8px; flex-shrink:0;">
+            <div style="text-align:center; font-family:var(--font-display); font-size:clamp(13px, 1.8vh, 16px); color:var(--c-text-light); margin-bottom:4px;">🧱 분류할 블록 (${blocks.length}개)</div>
+            <div style="display:flex; justify-content:center; gap:6px; flex-wrap:wrap;">${blocksPreview}</div>
+          </div>
+          
+          <div class="setup-section">
+            <div class="setup-step-header">
+              <span class="setup-step-num">1</span>
+              <span class="setup-step-title">분류 기준 정하기</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:10px; background:#F8FAFC; border:3px solid #E0E7FF; border-radius:14px; padding:10px 14px; margin-bottom:10px;">
+              ${ICONS.edit}
+              <input type="text" class="text-input" id="criterion-input" placeholder="예: 색깔, 모양, 크기..." 
+                value="${a4State.criterion}" 
+                oninput="a4State.criterion = this.value; a4State.presetKey = null; document.querySelectorAll('.preset-chip').forEach(c => c.classList.remove('active'));"
+                style="border:none; background:transparent; padding:0;">
+            </div>
+            <div class="preset-chips">
+              ${ICONS.wand}
+              <span style="font-family:var(--font-display); font-size:clamp(12px, 1.6vh, 14px); color:var(--c-text-light);">추천:</span>
+              ${Object.entries(PRESET_CRITERIA).map(([key, cfg]) => `
+                <button class="preset-chip ${a4State.presetKey === key ? 'active' : ''}" 
+                  data-key="${key}" onclick="applyPreset('${key}')">
+                  ${cfg.icon} ${cfg.label}
+                </button>
+              `).join('')}
+            </div>
+          </div>
+          
+          <div class="setup-section">
+            <div class="setup-step-header">
+              <span class="setup-step-num">2</span>
+              <span class="setup-step-title">분류함 이름 정하기</span>
+              <div style="margin-left:auto; display:flex; gap:6px; align-items:center;">
+                <span style="font-family:var(--font-body); font-size:clamp(11px, 1.5vh, 13px); color:var(--c-text-light);">자동:</span>
+                <button class="auto-toggle ${a4State.autoBins ? 'on' : 'off'}" onclick="toggleAutoBins()">
+                  ${a4State.autoBins ? 'ON' : 'OFF'}
+                </button>
+              </div>
+            </div>
+            <div class="bin-inputs" id="bin-inputs">
+              ${a4State.bins.map((b, i) => `
+                <div class="bin-input-wrap">
+                  <span style="color:#94A3B8; font-family:var(--font-display); font-size:clamp(11px, 1.5vh, 13px); flex-shrink:0;">${i + 1}.</span>
+                  <input type="text" placeholder="직접 쓰기" value="${b.label}" 
+                    oninput="a4State.bins[${i}].label = this.value; if(a4State.autoBins){a4State.autoBins=false; const t=document.querySelector('.auto-toggle'); if(t){t.textContent='OFF'; t.classList.remove('on'); t.classList.add('off');}}">
+                </div>
+              `).join('')}
+            </div>
+            <p style="font-family:var(--font-body); font-size:clamp(11px, 1.4vh, 13px); color:#94A3B8; margin-top:8px;">💡 2개 이상 적으면 시작할 수 있어요. 안 쓰는 칸은 비워둬도 돼요.</p>
+          </div>
+          
+          <button class="btn-main" onclick="startSorting()">분류 시작! ${ICONS.arrow}</button>
+        </div>
+      `);
+    }
+
+    function applyPreset(key) {
+      playSfx('click');
+      a4State.presetKey = key;
+      a4State.criterion = PRESET_CRITERIA[key].label;
+      
+      if (a4State.autoBins) {
+        const labels = Object.values(PRESET_CRITERIA[key].binLabels);
+        a4State.bins = labels.map((l, i) => ({ id: 'b' + (i + 1), label: l, items: [] }));
+        while (a4State.bins.length < 4) {
+          a4State.bins.push({ id: 'b' + (a4State.bins.length + 1), label: '', items: [] });
+        }
+      }
+      renderA4Setup();
+    }
+
+    function toggleAutoBins() {
+      playSfx('click');
+      a4State.autoBins = !a4State.autoBins;
+      if (a4State.autoBins && a4State.presetKey) {
+        const labels = Object.values(PRESET_CRITERIA[a4State.presetKey].binLabels);
+        a4State.bins = labels.map((l, i) => ({ id: 'b' + (i + 1), label: l, items: [] }));
+        while (a4State.bins.length < 4) {
+          a4State.bins.push({ id: 'b' + (a4State.bins.length + 1), label: '', items: [] });
+        }
+      }
+      renderA4Setup();
+    }
+
+    function startSorting() {
+      if (!a4State.criterion.trim()) {
+        showModal(`
+          <div style="font-size:60px;">✏️</div>
+          <h2 class="modal-title">분류 기준을 적어주세요!</h2>
+          <p class="modal-body">"색깔", "모양" 같은 분류 기준을 직접 적거나 추천 버튼을 눌러주세요.</p>
+          <button class="btn-secondary" onclick="closeModal()">확인</button>
+        `);
+        return;
+      }
+      const filled = a4State.bins.filter(b => b.label.trim());
+      if (filled.length < 2) {
+        showModal(`
+          <div style="font-size:60px;">📝</div>
+          <h2 class="modal-title">분류함이 더 필요해요!</h2>
+          <p class="modal-body">분류함 이름을 <strong>2개 이상</strong> 적어주세요.</p>
+          <button class="btn-secondary" onclick="closeModal()">확인</button>
+        `);
+        return;
+      }
+      playSfx('click');
+      a4State.bins = filled;
+      a4State.setupDone = true;
+      renderA4Sort();
+    }
+
+    function renderA4Sort() {
+      const blocks = shuffle((STATE.data.activity4Blocks || []).map(b => ({
+        id: b.ID, color: b.색깔, shape: b.모양, size: b.크기
+      })));
+      a4State.activeBlocks = blocks;
+      a4State.bins.forEach(b => b.items = []);
+      const binColors = ['rose', 'emerald', 'amber', 'sky', 'violet', 'orange'];
+      
+      showScreen(`
+        ${renderHeader({ number: 4, title: '🧱 기준을 정해 분류하기', criterionLabel: a4State.criterion, fixed: false })}
+        ${renderTutorial(`<strong>"${a4State.criterion}"</strong> 기준으로 블록을 끌어다 알맞은 칸에 놓아보세요!`)}
+        ${renderFeedback(`'${a4State.criterion}' 기준으로 분류해 보세요!`, 'happy')}
+        <div class="sort-main">
+          <div class="item-tray">
+            <span class="tray-label">🧱 블록 (${blocks.length})</span>
+            <div class="tray-items" id="block-tray"></div>
+          </div>
+          <div class="bins-column" style="--bin-count:${a4State.bins.length}">
+            ${a4State.bins.map((b, i) => `
+              <div class="drop-bin bin-${binColors[i % binColors.length]}" id="${b.id}">
+                <div class="bin-label-row">
+                  <span class="bin-label">${b.label}</span>
+                  <span class="bin-count" id="count-${b.id}">(0)</span>
+                </div>
+                <div class="bin-items" id="items-${b.id}"></div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `);
+      renderA4Blocks();
+    }
+
+    function renderA4Blocks() {
+      const tray = document.getElementById('block-tray');
+      if (!tray) return;
+      tray.innerHTML = '';
+      a4State.activeBlocks.forEach(block => {
+        const el = document.createElement('div');
+        el.className = 'draggable-item';
+        el.style.padding = '10px';
+        el.innerHTML = BlockSvg({ 색깔: block.color, 모양: block.shape, 크기: block.size }, 60);
+        tray.appendChild(el);
+        makeDraggable(el, (binId) => handleA4Drop(block, binId, el));
+      });
+    }
+
+    function handleA4Drop(block, binId, itemEl) {
+      a4State.activeBlocks = a4State.activeBlocks.filter(b => b.id !== block.id);
+      const bin = a4State.bins.find(b => b.id === binId);
+      if (!bin) return;
+      bin.items.push(block);
+      const itemsContainer = document.getElementById('items-' + binId);
+      const placed = document.createElement('div');
+      placed.className = 'bin-item';
+      placed.innerHTML = BlockSvg({ 색깔: block.color, 모양: block.shape, 크기: block.size }, 40);
+      itemsContainer.appendChild(placed);
+      const countEl = document.getElementById('count-' + binId);
+      if (countEl) countEl.textContent = `(${itemsContainer.children.length})`;
+      itemEl.remove();
+      renderA4Blocks();
+      updateFeedback('좋아요!', 'happy');
+      playSfx('correct');
+      
+      if (a4State.activeBlocks.length === 0) {
+        a4State.completedRounds++;
+        STATE.scores.a4 = a4State.completedRounds;
+        setTimeout(() => {
+          updateFeedback(`'${a4State.criterion}' 기준 완료! 🎉`, 'happy');
+          playSfx('success');
+          speak(`${a4State.criterion} 기준 분류 완료!`);
+          fireConfetti();
+          const tray = document.getElementById('block-tray');
+          tray.innerHTML = `
+            <div style="display:flex; flex-direction:column; gap:8px; align-items:center;">
+              <button class="btn-secondary" onclick="screenActivity4()">${ICONS.retry} 다른 기준으로</button>
+              ${a4State.completedRounds >= 1 ? `
+                <button class="btn-main" style="max-width:280px;" onclick="onActivity4Complete()">
+                  마무리하기 ${ICONS.arrow}
+                </button>
+              ` : ''}
+            </div>
+          `;
+        }, 600);
+      }
+    }
+
+    function onActivity4Complete() {
+      playSfx('click');
+      screenPostRecord(0);
+    }
+
+    // ================================================
+    //  자기평가
+    // ================================================
+    function screenSelfRating() {
+      let rating = 0;
+      function render() {
+        showScreen(`
+          ${renderTutorial('<strong>오늘 학습이 어땠나요?</strong> 별을 눌러 자기평가를 해주세요. 별 3개 이하면 다시 도전할 수 있어요!')}
+          <div style="flex:1; display:flex; align-items:center; justify-content:center;">
+            <div class="record-card">
+              <div style="font-size:60px;">🌟</div>
+              <h1 class="intro-title">자기 평가</h1>
+              <p class="intro-subtitle">오늘 분류 활동을 얼마나 잘했나요?</p>
+              <div class="stars-container" id="stars">
+                ${[1,2,3,4,5].map(n => `
+                  <button class="star-btn ${n <= rating ? 'filled' : ''}" data-rating="${n}" onclick="setRating(${n})" style="color:${n <= rating ? '#FBBF24' : '#CBD5E1'};">⭐</button>
+                `).join('')}
+              </div>
+              <div id="rating-text" style="font-family:var(--font-display); font-size:clamp(16px, 2.2vh, 20px); color:var(--c-text); min-height:30px; margin-bottom:16px;">
+                별을 눌러주세요
+              </div>
+              <button class="btn-main" id="rating-submit" disabled onclick="submitRating()">
+                제출하기 ${ICONS.arrow}
+              </button>
+            </div>
+          </div>
+          <div style="display:flex; justify-content:center; flex-shrink:0;">
+            <button class="speaker-toggle ${STATE.speakerOn ? 'on' : ''}" onclick="toggleSpeaker()">
+              ${STATE.speakerOn ? ICONS.speakerOn : ICONS.speakerOff}
+            </button>
+          </div>
+        `);
+      }
+      window.setRating = (n) => {
+        playSfx('click');
+        rating = n;
+        STATE.selfRating = n;
+        document.querySelectorAll('.star-btn').forEach(btn => {
+          const v = parseInt(btn.dataset.rating);
+          btn.classList.toggle('filled', v <= n);
+          btn.style.color = v <= n ? '#FBBF24' : '#CBD5E1';
+        });
+        const texts = ['', '많이 어려웠어요 😢', '조금 어려웠어요 😕', '괜찮았어요 🙂', '잘했어요! 😊', '정말 잘했어요! 🎉'];
+        document.getElementById('rating-text').textContent = texts[n];
+        document.getElementById('rating-submit').disabled = false;
+      };
+      window.submitRating = async () => {
+        playSfx('click');
+        const totalSec = Math.round((Date.now() - STATE.startTime) / 1000);
+        try {
+          await gasPost({
+            action: 'saveResult',
+            studentId: STATE.studentId,
+            studentName: STATE.studentName,
+            activity1Score: STATE.scores.a1,
+            activity2Score: STATE.scores.a2,
+            activity3Score: STATE.scores.a3,
+            activity4Count: STATE.scores.a4,
+            selfRating: STATE.selfRating,
+            retryCount: STATE.retryCount,
+            totalSeconds: totalSec
+          });
+        } catch (err) { console.error(err); }
+        if (STATE.selfRating <= 3 && STATE.retryCount === 0) {
+          screenRetryOption();
+        } else {
+          screenStamp();
+        }
+      };
+      render();
+    }
+
+    function screenRetryOption() {
+      showScreen(`
+        <div style="flex:1; display:flex; align-items:center; justify-content:center;">
+          <div class="record-card">
+            <div style="font-size:60px;">💪</div>
+            <h1 class="intro-title">한번 더 해볼까요?</h1>
+            <p class="intro-subtitle">별이 3개 이하예요! 활동을 한번 더 해보면 더 잘할 수 있을 거예요.<br/>다시 도전해 볼래요?</p>
+            <div style="display:flex; gap:10px; flex-direction:column;">
+              <button class="btn-main" onclick="retryActivities()">네! 다시 할게요 💪</button>
+              <button class="btn-secondary" onclick="screenStamp()">아니요, 끝낼래요</button>
+            </div>
+          </div>
+        </div>
+      `);
+    }
+
+    function retryActivities() {
+      playSfx('click');
+      STATE.retryCount++;
+      STATE.scores = { a1: 0, a2: 0, a3: 0, a4: 0 };
+      screenActivity1();
+    }
+
+    // ================================================
+    //  최종 임명장
+    // ================================================
+    function screenStamp() {
+      fireConfetti();
+      playSfx('success');
+      showScreen(`
+        <div style="flex:1; display:flex; align-items:center; justify-content:center; overflow-y:auto;">
+          <div class="stamp-card">
+            <div style="color:#FBBF24;">${ICONS.trophy}</div>
+            <h1 class="intro-title" style="margin-top:8px;">분류 탐구 마스터!</h1>
+            <p class="intro-subtitle">${STATE.studentName} 친구가<br/>오늘의 모험을 멋지게 마쳤어요!</p>
+            <div class="stamp-circle">
+              <div class="stamp-inner">
+                <span class="stamp-inner-text">참 잘했어요!</span>
+                <span class="stamp-inner-emoji">🏆</span>
+                <span class="stamp-inner-text" style="font-size:10px; opacity:0.5; letter-spacing:2px;">MASTER</span>
+              </div>
+            </div>
+            <div style="background:#F0F9FF; border:3px solid #BAE6FD; border-radius:14px; padding:12px; margin-bottom:16px; text-align:left;">
+              <div style="font-family:var(--font-display); font-size:clamp(14px, 2vh, 17px); color:#0C4A6E; margin-bottom:6px;">📊 학습 결과</div>
+              <div style="font-family:var(--font-body); font-size:clamp(13px, 1.7vh, 15px); color:var(--c-text); line-height:1.6;">
+                • 학용품 분류: <strong>${STATE.scores.a1}점</strong><br/>
+                • 동물 분류: <strong>${STATE.scores.a2}점</strong><br/>
+                • 기준 찾기: <strong>${STATE.scores.a3}점</strong><br/>
+                • 자유 분류: <strong>${STATE.scores.a4}회 완료</strong><br/>
+                • 자기평가: <strong>⭐ ${STATE.selfRating}개</strong>
+              </div>
+            </div>
+            <button class="btn-main" onclick="downloadStamp()">💾 임명장 저장하기</button>
+            <button class="btn-secondary" style="margin-top:8px;" onclick="location.reload()">처음으로</button>
+          </div>
+        </div>
+      `);
+    }
+
+    function downloadStamp() {
+      playSfx('click');
+      const canvas = document.createElement('canvas');
+      canvas.width = 600; canvas.height = 600;
+      const ctx = canvas.getContext('2d');
+      const grad = ctx.createLinearGradient(0, 0, 0, 600);
+      grad.addColorStop(0, '#FFFBEB'); grad.addColorStop(1, '#FEF3C7');
+      ctx.fillStyle = grad; ctx.fillRect(0, 0, 600, 600);
+      ctx.strokeStyle = '#6366F1'; ctx.lineWidth = 12;
+      ctx.strokeRect(20, 20, 560, 560);
+      ctx.strokeStyle = '#FBBF24'; ctx.lineWidth = 4;
+      ctx.strokeRect(35, 35, 530, 530);
+      ctx.strokeStyle = '#6366F1'; ctx.lineWidth = 18;
+      ctx.beginPath(); ctx.arc(300, 280, 200, 0, Math.PI * 2); ctx.stroke();
+      ctx.fillStyle = '#6366F1'; ctx.textAlign = 'center';
+      ctx.font = 'bold 48px sans-serif';
+      ctx.fillText('🏆 임명장 🏆', 300, 130);
+      ctx.font = 'bold 32px sans-serif';
+      ctx.fillText('분류 탐구 마스터', 300, 240);
+      ctx.fillStyle = '#1E293B';
+      ctx.font = 'bold 36px sans-serif';
+      ctx.fillText(STATE.studentName, 300, 310);
+      ctx.font = '20px sans-serif'; ctx.fillStyle = '#64748B';
+      ctx.fillText('위 학생은 분류하기 활동을', 300, 360);
+      ctx.fillText('멋지게 완수하였기에', 300, 390);
+      ctx.fillText('이 임명장을 드립니다.', 300, 420);
+      ctx.font = '60px sans-serif';
+      ctx.fillText('🌟', 300, 480);
+      const now = new Date();
+      ctx.font = '18px sans-serif'; ctx.fillStyle = '#94A3B8';
+      ctx.fillText(`${now.getFullYear()}년 ${now.getMonth() + 1}월 ${now.getDate()}일`, 300, 540);
+      const link = document.createElement('a');
+      link.download = `분류박물관_${STATE.studentName}_임명장.png`;
+      link.href = canvas.toDataURL();
+      link.click();
+    }
+
+    // ================================================
+    //  앱 시작
+    // ================================================
+    (async function() {
+      document.getElementById('app').innerHTML = `
+        <div class="screen" style="align-items:center; justify-content:center;">
+          <div style="text-align:center;">
+            <div style="font-size:80px; animation: spin 2s linear infinite; display:inline-block;">🔍</div>
+            <div style="font-family:var(--font-display); font-size:clamp(20px, 3vh, 28px); color:var(--c-primary-dark); margin-top:16px;">
+              분류 박물관 준비 중...
+            </div>
+            <div style="font-family:var(--font-body); font-size:clamp(13px, 1.8vh, 16px); color:var(--c-text-light); margin-top:8px;">
+              잠시만 기다려 주세요
+            </div>
+          </div>
+        </div>
+      `;
+      try {
+        const res = await gasGet('getAllData');
+        if (!res.success) {
+          showLoadError(res.error || '알 수 없는 오류');
+          return;
+        }
+        STATE.data = res.data;
+        screenIntro();
+      } catch (err) {
+        showLoadError(err.message || err.toString());
+      }
+    })();
+
+    function showLoadError(msg) {
+      document.getElementById('app').innerHTML = `
+        <div class="screen" style="align-items:center; justify-content:center;">
+          <div class="record-card">
+            <div style="font-size:80px;">⚠️</div>
+            <h1 class="intro-title">데이터를 불러올 수 없어요</h1>
+            <p class="intro-subtitle">서버 연결을 확인해 주세요.<br/>구글 시트에서 메뉴 → <strong>🔍 분류박물관 → ① 시트 셋업</strong>을 했는지 확인하세요.</p>
+            <div style="background:#FEF2F2; border:2px solid #FECACA; border-radius:12px; padding:12px; font-family:var(--font-body); font-size:13px; color:#991B1B; margin-bottom:16px; word-break:break-all; text-align:left;">
+              ${msg}
+            </div>
+            <button class="btn-main" onclick="location.reload()">다시 시도</button>
+          </div>
+        </div>
+      `;
+    }
+  </script>
+</body>
+</html>
