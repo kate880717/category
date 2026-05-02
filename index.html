@@ -1338,7 +1338,15 @@
       if (!STATE.speakerOn && window.speechSynthesis) {
         window.speechSynthesis.cancel();
       }
-      if (STATE.speakerOn) speak("소리가 켜졌어요!");
+      if (STATE.speakerOn) {
+        // 스피커 켜는 순간 안내 + 현재 화면 다시 읽어주기
+        playSfx('click');
+        speak('소리가 켜졌어요');
+        // 현재 화면 안내 음성 다시 재생
+        if (window._lastAutoReadText) {
+          setTimeout(() => speakSlow(window._lastAutoReadText), 1200);
+        }
+      }
     }
 
     // 한국어 여성 음성 우선순위 리스트 (브라우저별)
@@ -1673,10 +1681,11 @@
      * - 튜토리얼 텍스트 + 메인 안내문 읽어줌
      */
     function autoReadScreen(text) {
+      // 마지막 안내 텍스트 저장 (스피커 켤 때 다시 읽어주기 위해)
+      window._lastAutoReadText = text;
       if (!STATE.speakerOn) return;
       // 화면 그려진 후 약간 지연 후 읽음 (애니메이션 시작 후)
       setTimeout(() => {
-        // HTML 태그 제거하고 텍스트만 추출
         const div = document.createElement('div');
         div.innerHTML = text;
         const cleanText = div.textContent || div.innerText || '';
@@ -2910,25 +2919,25 @@
       showScreen(`
         <div style="flex:1; display:flex; align-items:center; justify-content:center; width:100%;">
           <div class="record-card">
-            <div style="font-size: clamp(72px, 10.3vh, 108px); line-height:1;">💪🌟</div>
-            <h1 class="intro-title">한번 더 도전해볼까요? 💕</h1>
+            <div style="font-size: clamp(70px, 10vh, 100px); line-height:1;">💪</div>
+            <h1 class="intro-title">한번 더 해볼까요?</h1>
             <p class="intro-subtitle" style="margin-bottom:clamp(12px, 1.8vh, 18px);">
-              별이 3개 이하예요!<br/>
-              <span class="hi-pink"><strong>다시 해보면</strong></span> 잘할 수 있어요! 🎯
+              <span class="hi-pink"><strong>다시 해보면</strong></span> 더 잘할 수 있어요
             </p>
-            <div style="background:#FFFBEB; border:3px solid #FCD34D; border-radius:18px; padding:clamp(10px, 1.5vh, 16px); margin-bottom:clamp(14px, 2vh, 20px);">
-              <p style="font-family:var(--font-body); color:#78350F; font-size: clamp(31px, 3.4vh, 37px); line-height:1.6;">
-                💡 처음에는 어려워도 괜찮아요!<br/>
-                🌱 다시 해보면 더 잘할 수 있어요!
+            <div style="background:#FFFBEB; border:3px solid #FCD34D; border-radius:18px; padding:clamp(14px, 2vh, 18px); margin-bottom:clamp(14px, 2vh, 20px);">
+              <p style="font-family:var(--font-display); color:#78350F; font-size: clamp(24px, 3vh, 30px); line-height:1.5;">
+                처음에는 어려워도 괜찮아요<br/>
+                다시 해보면 더 잘할 수 있어요
               </p>
             </div>
             <div style="display:flex; gap:10px; flex-direction:column;">
-              <button class="btn-main" onclick="retryActivities()">💪 네! 다시 도전할래요!</button>
-              <button class="btn-secondary" onclick="screenStamp()">🏁 아니요, 끝낼래요</button>
+              <button class="btn-main" onclick="retryActivities()">다시 도전할래요</button>
+              <button class="btn-secondary" onclick="screenStamp()">아니요, 끝낼래요</button>
             </div>
           </div>
         </div>
       `);
+      autoReadScreen('한번 더 해볼까요? 다시 해보면 더 잘할 수 있어요. 처음에는 어려워도 괜찮아요.');
     }
 
     function retryActivities() {
