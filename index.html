@@ -977,37 +977,70 @@
 
     /* 자기평가 - 별 명확하게 */
     .stars-container {
-      display: flex; justify-content: center; gap: clamp(8px, 1.8vw, 16px);
-      margin: clamp(14px, 2.2vh, 22px) 0;
+      display: flex; justify-content: center; gap: clamp(8px, 1.8vw, 18px);
+      margin: clamp(12px, 2vh, 20px) 0;
     }
     .star-btn {
-      font-size: clamp(54px, 8.5vh, 80px);
-      line-height: 1;
-      transition: all 0.2s;
-      background: #F1F5F9;
-      border-radius: 50%;
-      width: clamp(80px, 12vh, 110px);
-      height: clamp(80px, 12vh, 110px);
+      transition: transform 0.2s;
+      background: transparent;
+      border: none;
+      padding: 0;
+      cursor: pointer;
+      width: clamp(70px, 11vh, 100px);
+      height: clamp(70px, 11vh, 100px);
       display: flex;
       align-items: center;
       justify-content: center;
-      border: 4px solid #CBD5E1;
-      /* 처음엔 회색 - 이모지에 grayscale 필터 적용 */
-      filter: grayscale(1) brightness(1.4) opacity(0.5);
     }
+    .star-btn .star-svg {
+      width: 100%;
+      height: 100%;
+      filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
+    }
+    /* 안 칠한 별 - 깔끔한 회색 */
+    .star-btn .star-svg .star-fill { fill: #D1D5DB; }
+    .star-btn .star-svg .star-shadow { fill: #9CA3AF; }
+    /* 칠한 별 - 선명한 노란색 */
+    .star-btn.filled .star-svg .star-fill { fill: #FBBF24; }
+    .star-btn.filled .star-svg .star-shadow { fill: #D97706; }
     .star-btn.filled {
-      background: #FEF3C7;
-      border-color: #FBBF24;
-      filter: none;
       animation: star-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-      transform: scale(1.1);
     }
     @keyframes star-pop {
       0% { transform: scale(0.5) rotate(-180deg); }
-      100% { transform: scale(1.1) rotate(0); }
+      100% { transform: scale(1) rotate(0); }
     }
-    .star-btn:hover { transform: scale(1.15); }
-    .star-btn.filled:hover { transform: scale(1.2); }
+    .star-btn:hover { transform: scale(1.1); }
+    .star-btn:active { transform: scale(0.95); }
+    
+    /* 자기평가 메인 질문 - 크게 */
+    .self-rating-question {
+      font-family: var(--font-display);
+      font-size: clamp(34px, 4.4vh, 46px);
+      color: var(--c-text);
+      line-height: 1.3;
+      margin-bottom: clamp(8px, 1.2vh, 12px);
+      word-break: keep-all;
+    }
+    /* 보조 안내 - 작게, 흐리게 */
+    .self-rating-sub {
+      font-family: var(--font-display);
+      font-size: clamp(20px, 2.6vh, 26px);
+      color: var(--c-text-light);
+      line-height: 1.4;
+      margin-bottom: clamp(14px, 2vh, 22px);
+      word-break: keep-all;
+    }
+    /* 별 누른 후 표시 텍스트 */
+    .rating-text-display {
+      font-family: var(--font-display);
+      font-size: clamp(28px, 3.6vh, 36px);
+      color: var(--c-primary-dark);
+      min-height: clamp(40px, 6vh, 60px);
+      margin: clamp(8px, 1.2vh, 14px) 0 clamp(12px, 1.8vh, 18px);
+      line-height: 1.4;
+      word-break: keep-all;
+    }
 
     /* 임명장 */
     .stamp-card {
@@ -1505,6 +1538,17 @@
       edit: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>',
       wand: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4V2"/><path d="M15 16v-2"/><path d="M8 9h2"/><path d="M20 9h2"/><path d="M3 21l9-9"/></svg>'
     };
+    
+    // 별 SVG - 깔끔한 3D 스타일 (회색/노란색 명확히)
+    function StarSvg() {
+      return `
+        <svg class="star-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <path class="star-shadow" d="M50 12 L61 38 L88 41 L68 60 L74 88 L50 73 L26 88 L32 60 L12 41 L39 38 Z" 
+                transform="translate(2, 4)"/>
+          <path class="star-fill" d="M50 12 L61 38 L88 41 L68 60 L74 88 L50 73 L26 88 L32 60 L12 41 L39 38 Z"/>
+        </svg>
+      `;
+    }
 
     // ================================================
     //  마스코트 SVG
@@ -1823,10 +1867,9 @@
         <div style="flex:1; display:flex; align-items:center; justify-content:center; width:100%;">
           <div class="intro-card">
             ${FairySvg('happy', 80)}
-            <h1 class="intro-title">🔍 창의 분류 박물관</h1>
+            <h1 class="intro-title">창의 분류 박물관</h1>
             <p class="intro-subtitle">
-              안녕! 친구들 🙋‍♀️🙋‍♂️<br/>
-              <span class="hi-yellow"><strong>분류하기</strong></span>를 배워봐요!
+              안녕 친구들! <span class="hi-yellow"><strong>분류하기</strong></span>를 배워봐요
             </p>
             <div style="background:#FFFBEB; border:3px solid #FCD34D; border-radius:18px; padding:clamp(10px, 1.5vh, 14px); margin-bottom:clamp(12px, 1.8vh, 18px);">
               <div class="intro-grid">
@@ -1837,12 +1880,12 @@
               </div>
             </div>
             <button class="btn-main" onclick="askMicPermission()">
-              🚀 시작하기 🚀
+              시작하기
             </button>
           </div>
         </div>
       `);
-      autoReadScreen('안녕! 친구들. 분류하기를 배워봐요. 시작 버튼을 눌러주세요.');
+      autoReadScreen('안녕 친구들! 분류하기를 배워봐요. 시작하기 버튼을 눌러주세요.');
     }
     
     /* 마이크 권한 요청 - 한 번만 묻기 */
@@ -1991,24 +2034,26 @@
       showScreen(`
         <div style="flex:1; display:flex; align-items:center; justify-content:center; width:100%;">
           <div class="intro-card">
-            <div style="font-size: clamp(72px, 10.3vh, 108px); line-height:1;">👋😊</div>
-            <h1 class="intro-title"><span class="text-pink">${STATE.studentName}</span> 친구!<br/>반가워요 💕</h1>
+            <div style="font-size: clamp(70px, 10vh, 100px); line-height:1;">👋</div>
+            <h1 class="intro-title">
+              <span class="text-pink">${STATE.studentName}</span> 친구, 반가워요!
+            </h1>
             <p class="intro-subtitle">
-              <span class="hi-yellow">분류</span>를 배워봐요! 🌈
+              지금부터 <span class="hi-yellow"><strong>분류하기</strong></span>를 배워봐요
             </p>
-            <div style="background:#FFF0F5; border:3px solid #FBCFE8; border-radius:18px; padding:clamp(12px, 1.8vh, 18px); margin-bottom:clamp(14px, 2vh, 20px);">
-              <p style="color:#9F1239; font-size: clamp(36px, 3.9vh, 40px); line-height:1.6;">
-                💕 천천히 차근차근!<br/>
-                💪 틀려도 괜찮아요!
+            <div style="background:#FFF0F5; border:3px solid #FBCFE8; border-radius:18px; padding:clamp(14px, 2vh, 20px); margin-bottom:clamp(14px, 2vh, 20px);">
+              <p style="color:#9F1239; font-family:var(--font-display); font-size: clamp(26px, 3.2vh, 32px); line-height:1.5;">
+                천천히 차근차근 해봐요<br/>
+                틀려도 괜찮아요
               </p>
             </div>
             <button class="btn-main" onclick="screenPreRecord(0)">
-              🌟 시작! 🌟
+              시작하기
             </button>
           </div>
         </div>
       `);
-      autoReadScreen(`${STATE.studentName} 친구! 반가워요. 분류를 배워봐요. 천천히 차근차근! 틀려도 괜찮아요.`);
+      autoReadScreen(`${STATE.studentName} 친구 반가워요. 지금부터 분류하기를 배워봐요. 천천히 차근차근 해봐요. 틀려도 괜찮아요.`);
     }
 
     // ================================================
@@ -2784,22 +2829,26 @@
         showScreen(`
           ${renderTutorial('<strong>오늘 활동이 어땠나요?</strong> 별을 콕! 눌러주세요')}
           <div style="flex:1; display:flex; align-items:center; justify-content:center; width:100%;">
-            <div class="record-card">
-              <div style="font-size: clamp(72px, 10.3vh, 108px); line-height:1;">🌟</div>
-              <h1 class="intro-title">자기 평가</h1>
-              <p class="intro-subtitle" style="margin-bottom:clamp(10px, 1.5vh, 16px);">
-                얼마나 잘했나요? 😊
+            <div class="record-card" style="text-align:center;">
+              <div style="display:flex; justify-content:center; margin-bottom:clamp(8px, 1.2vh, 14px);">
+                <div style="width:clamp(80px, 11vh, 100px); height:clamp(80px, 11vh, 100px);">${StarSvg().replace('class="star-svg"', 'class="star-svg" style="filter: drop-shadow(0 4px 8px rgba(251,191,36,0.4));"')}</div>
+              </div>
+              <h1 class="self-rating-question">
+                오늘 분류 활동은<br/>얼마나 재미있었나요?
+              </h1>
+              <p class="self-rating-sub">
+                재미있었던 만큼 별을 눌러주세요
               </p>
               <div class="stars-container" id="stars">
                 ${[1,2,3,4,5].map(n => `
-                  <button class="star-btn ${n <= rating ? 'filled' : ''}" data-rating="${n}" onclick="setRating(${n})">⭐</button>
+                  <button class="star-btn ${n <= rating ? 'filled' : ''}" data-rating="${n}" onclick="setRating(${n})">${StarSvg()}</button>
                 `).join('')}
               </div>
-              <div id="rating-text" style="font-family:var(--font-display); font-size: clamp(38px, 4.3vh, 46px); color:var(--c-text); min-height:clamp(40px, 6vh, 60px); margin-bottom:clamp(12px, 1.8vh, 18px); line-height:1.4;">
-                👆 별을 눌러주세요!
+              <div id="rating-text" class="rating-text-display">
+                👆 별을 눌러주세요
               </div>
               <button class="btn-main" id="rating-submit" disabled onclick="submitRating()">
-                ✅ 제출하기 ${ICONS.arrow}
+                다음으로 ${ICONS.arrow}
               </button>
             </div>
           </div>
@@ -2809,8 +2858,9 @@
             </button>
           </div>
         `);
-        autoReadScreen('자기 평가 시간이에요. 오늘 활동을 얼마나 잘했나요? 별을 눌러주세요.');
+        autoReadScreen('오늘 분류 활동은 얼마나 재미있었나요? 재미있었던 만큼 별을 눌러주세요.');
       }
+      // 모든 별 강조 효과를 1.1배 transform으로 처리하므로 fill만 바꾸면 됨
       window.setRating = (n) => {
         playSfx('click');
         rating = n;
@@ -2819,14 +2869,15 @@
           const v = parseInt(btn.dataset.rating);
           btn.classList.toggle('filled', v <= n);
         });
-        const texts = ['', 
-          '😢 많이 어려웠어요',
-          '😕 조금 어려웠어요',
-          '🙂 괜찮았어요',
-          '😊 잘했어요!',
-          '🎉 정말 잘했어요!'
+        const texts = ['',
+          '많이 어려웠어요',
+          '조금 어려웠어요',
+          '괜찮았어요',
+          '재미있었어요',
+          '아주 재미있었어요'
         ];
-        document.getElementById('rating-text').innerHTML = `⭐ ${n}개 - ${texts[n]}`;
+        const emojis = ['', '😢', '😕', '🙂', '😊', '🤩'];
+        document.getElementById('rating-text').innerHTML = `${emojis[n]} ${texts[n]}`;
         document.getElementById('rating-submit').disabled = false;
       };
       window.submitRating = async () => {
