@@ -957,6 +957,213 @@
     }
     .transcript-empty { color: #94A3B8; font-family: var(--font-display); }
     
+    /* === 새 녹음 화면 컴포넌트들 === */
+    .record-input-area {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: clamp(6px, 1vh, 10px);
+      flex-shrink: 0;
+    }
+    .transcript-wrap {
+      display: flex; flex-direction: column;
+      gap: clamp(4px, 0.7vh, 8px);
+      flex-shrink: 0;
+    }
+    .transcript-label {
+      font-family: var(--font-display);
+      font-size: clamp(18px, 2.3vh, 22px);
+      color: var(--c-text-light);
+      text-align: left;
+      padding-left: 4px;
+    }
+    .transcript-textarea {
+      width: 100%;
+      padding: clamp(10px, 1.6vh, 14px) clamp(12px, 1.8vw, 16px);
+      background: #F0F9FF;
+      border: 3px solid #BAE6FD;
+      border-radius: 16px;
+      font-family: var(--font-display);
+      font-size: clamp(22px, 2.7vh, 28px);
+      color: var(--c-text);
+      line-height: 1.4;
+      resize: none;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .transcript-textarea:focus {
+      border-color: var(--c-primary);
+      background: white;
+    }
+    .transcript-textarea::placeholder {
+      color: #94A3B8;
+      font-family: var(--font-display);
+    }
+    
+    /* 녹음 후 다시 듣기 + 자기평가 영역 */
+    #post-record-area {
+      background: #FAF5FF;
+      border: 3px solid #E9D5FF;
+      border-radius: 16px;
+      padding: clamp(10px, 1.5vh, 16px);
+      flex-shrink: 0;
+      animation: pop-in 0.3s ease;
+    }
+    .post-record-buttons {
+      display: flex;
+      gap: clamp(6px, 1vw, 10px);
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: clamp(8px, 1.2vh, 12px);
+    }
+    .btn-listen, .btn-rerecord {
+      padding: clamp(10px, 1.6vh, 14px) clamp(14px, 2.2vw, 20px);
+      border-radius: 999px;
+      font-family: var(--font-display);
+      font-size: clamp(18px, 2.4vh, 22px);
+      transition: all 0.15s;
+      border: 3px solid;
+    }
+    .btn-listen {
+      background: white;
+      color: #6366F1;
+      border-color: #C7D2FE;
+    }
+    .btn-listen:hover { background: #EEF2FF; transform: translateY(-2px); }
+    .btn-rerecord {
+      background: white;
+      color: #DC2626;
+      border-color: #FECACA;
+    }
+    .btn-rerecord:hover { background: #FEE2E2; transform: translateY(-2px); }
+    
+    /* 미니 별점 (녹음 후) */
+    .mini-rating {
+      text-align: center;
+    }
+    .mini-rating-label {
+      font-family: var(--font-display);
+      font-size: clamp(20px, 2.6vh, 26px);
+      color: var(--c-primary-dark);
+      margin-bottom: clamp(6px, 1vh, 10px);
+    }
+    .mini-stars {
+      display: flex;
+      justify-content: center;
+      gap: clamp(4px, 0.8vw, 8px);
+      margin-bottom: clamp(4px, 0.8vh, 8px);
+    }
+    .mini-star-btn {
+      width: clamp(40px, 6vh, 56px);
+      height: clamp(40px, 6vh, 56px);
+      background: transparent;
+      border: none;
+      padding: 0;
+      cursor: pointer;
+      transition: transform 0.15s;
+    }
+    .mini-star-btn .star-svg { width: 100%; height: 100%; }
+    .mini-star-btn .star-svg .star-fill { fill: #D1D5DB; }
+    .mini-star-btn .star-svg .star-shadow { fill: #9CA3AF; }
+    .mini-star-btn.filled .star-svg .star-fill { fill: #FBBF24; }
+    .mini-star-btn.filled .star-svg .star-shadow { fill: #D97706; }
+    .mini-star-btn.filled { transform: scale(1.1); }
+    .mini-star-btn:hover { transform: scale(1.15); }
+    .mini-rating-text {
+      font-family: var(--font-display);
+      font-size: clamp(20px, 2.5vh, 24px);
+      color: var(--c-primary-dark);
+      min-height: clamp(28px, 3.5vh, 36px);
+      line-height: 1.3;
+    }
+    
+    /* === 성찰 단계 (도움 받은 사람 체크) === */
+    .reflect-help-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: clamp(8px, 1.2vw, 14px);
+      margin-bottom: clamp(14px, 2vh, 20px);
+    }
+    .help-btn {
+      background: white;
+      border: 4px solid #E0E7FF;
+      border-radius: 18px;
+      padding: clamp(12px, 1.8vh, 16px) clamp(8px, 1.2vw, 12px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: clamp(4px, 0.6vh, 8px);
+      cursor: pointer;
+      transition: all 0.15s;
+      font-family: var(--font-display);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    }
+    .help-btn:hover {
+      transform: translateY(-2px);
+      border-color: var(--c-primary);
+    }
+    .help-btn.checked {
+      background: linear-gradient(135deg, #FBBF24, #F59E0B);
+      color: white;
+      border-color: #D97706;
+      transform: scale(1.05);
+      box-shadow: 0 6px 14px rgba(251, 191, 36, 0.4);
+    }
+    .help-emoji {
+      font-size: clamp(34px, 5vh, 50px);
+      line-height: 1;
+    }
+    .help-label {
+      font-size: clamp(16px, 2.2vh, 20px);
+      font-weight: bold;
+      color: inherit;
+    }
+    
+    /* 자신감 평가 */
+    .reflect-confidence {
+      background: #F0F9FF;
+      border: 3px solid #BAE6FD;
+      border-radius: 18px;
+      padding: clamp(12px, 1.8vh, 18px);
+      margin-bottom: clamp(10px, 1.5vh, 14px);
+    }
+    .reflect-confidence-label {
+      font-family: var(--font-display);
+      font-size: clamp(22px, 2.8vh, 28px);
+      color: #0C4A6E;
+      text-align: center;
+      margin-bottom: clamp(8px, 1.2vh, 12px);
+    }
+    .confidence-buttons {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: clamp(6px, 1vw, 10px);
+    }
+    .conf-btn {
+      background: white;
+      border: 3px solid #E0E7FF;
+      border-radius: 14px;
+      padding: clamp(10px, 1.6vh, 14px) clamp(4px, 0.8vw, 8px);
+      cursor: pointer;
+      font-family: var(--font-display);
+      font-size: clamp(16px, 2.2vh, 20px);
+      line-height: 1.3;
+      transition: all 0.15s;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.05);
+      color: var(--c-text);
+    }
+    .conf-btn:hover {
+      transform: translateY(-2px);
+      border-color: var(--c-primary);
+    }
+    .conf-btn.checked {
+      background: linear-gradient(135deg, #6366F1, #8B5CF6);
+      color: white;
+      border-color: #4338CA;
+      transform: scale(1.05);
+      box-shadow: 0 6px 14px rgba(99, 102, 241, 0.4);
+    }
+    
     /* 액션 버튼 영역 - 항상 카드 안에 보이게 */
     .record-actions {
       display: flex;
@@ -1323,7 +1530,9 @@
       postRecordings: [],
       startTime: null,
       selfRating: 0,
-      retryCount: 0
+      retryCount: 0,
+      reflectionHelps: { teacher: false, friend: false, app: false, none: false },
+      reflectionConfidence: 0
     };
 
     // ================================================
@@ -1525,37 +1734,74 @@
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
       const ctx = canvas.getContext('2d');
-      const colors = ['#FBBF24', '#EC4899', '#10B981', '#6366F1', '#F97316', '#8B5CF6'];
+      const colors = ['#FBBF24', '#EC4899', '#10B981', '#6366F1', '#F97316', '#8B5CF6', '#EF4444'];
+      // 모양 타입: 0=사각형, 1=원, 2=별, 3=하트
       const particles = [];
-      for (let i = 0; i < 100; i++) {
+      for (let i = 0; i < 120; i++) {
         particles.push({
-          x: canvas.width / 2, y: canvas.height / 2,
-          vx: (Math.random() - 0.5) * 16,
-          vy: (Math.random() - 0.7) * 16,
+          x: canvas.width / 2 + (Math.random() - 0.5) * 100, 
+          y: canvas.height / 2,
+          vx: (Math.random() - 0.5) * 18,
+          vy: (Math.random() - 0.8) * 18,
           color: colors[Math.floor(Math.random() * colors.length)],
-          size: Math.random() * 8 + 4,
+          size: Math.random() * 10 + 6,
           rotation: Math.random() * 360,
-          vRot: (Math.random() - 0.5) * 10,
-          opacity: 1
+          vRot: (Math.random() - 0.5) * 12,
+          opacity: 1,
+          shape: Math.floor(Math.random() * 4)
         });
+      }
+      function drawStar(ctx, size) {
+        ctx.beginPath();
+        for (let i = 0; i < 5; i++) {
+          const angle = (i * 144 - 90) * Math.PI / 180;
+          const r = i === 0 ? size : size * 0.5;
+          const x2 = Math.cos(angle) * size;
+          const y2 = Math.sin(angle) * size;
+          if (i === 0) ctx.moveTo(x2, y2);
+          else ctx.lineTo(x2, y2);
+          const innerAngle = ((i * 144) + 72 - 90) * Math.PI / 180;
+          ctx.lineTo(Math.cos(innerAngle) * size * 0.4, Math.sin(innerAngle) * size * 0.4);
+        }
+        ctx.closePath();
+        ctx.fill();
+      }
+      function drawHeart(ctx, size) {
+        ctx.beginPath();
+        ctx.moveTo(0, size * 0.3);
+        ctx.bezierCurveTo(0, -size * 0.2, -size, -size * 0.2, -size, size * 0.2);
+        ctx.bezierCurveTo(-size, size * 0.6, 0, size * 0.9, 0, size);
+        ctx.bezierCurveTo(0, size * 0.9, size, size * 0.6, size, size * 0.2);
+        ctx.bezierCurveTo(size, -size * 0.2, 0, -size * 0.2, 0, size * 0.3);
+        ctx.fill();
       }
       let frame = 0;
       function animate() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         particles.forEach(p => {
           p.x += p.vx; p.y += p.vy; p.vy += 0.4;
-          p.rotation += p.vRot; p.opacity -= 0.012;
+          p.rotation += p.vRot; p.opacity -= 0.010;
           if (p.opacity <= 0) return;
           ctx.save();
           ctx.translate(p.x, p.y);
           ctx.rotate(p.rotation * Math.PI / 180);
           ctx.globalAlpha = Math.max(0, p.opacity);
           ctx.fillStyle = p.color;
-          ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+          if (p.shape === 0) {
+            ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+          } else if (p.shape === 1) {
+            ctx.beginPath();
+            ctx.arc(0, 0, p.size / 2, 0, Math.PI * 2);
+            ctx.fill();
+          } else if (p.shape === 2) {
+            drawStar(ctx, p.size * 0.7);
+          } else {
+            drawHeart(ctx, p.size * 0.6);
+          }
           ctx.restore();
         });
         frame++;
-        if (frame < 100) requestAnimationFrame(animate);
+        if (frame < 120) requestAnimationFrame(animate);
         else ctx.clearRect(0, 0, canvas.width, canvas.height);
       }
       animate();
@@ -2151,18 +2397,20 @@
       const questions = phase === 'pre' ? (STATE.data.preQuestions || []) : (STATE.data.postQuestions || []);
       if (questions.length === 0 || idx >= questions.length) {
         if (phase === 'pre') screenActivity1();
-        else screenSelfRating();
+        else screenReflection();  // 학습 후 → 성찰 단계
         return;
       }
       const q = questions[idx];
       window._currentQuestion = q;
+      window._currentRecordingBlob = null;  // 다시 듣기용
+      window._currentRecordingUrl = null;
       const phaseLabel = phase === 'pre' ? '학습 전' : '학습 후';
       const phaseColor = phase === 'pre' ? '#F97316' : '#8B5CF6';
       const phaseEmoji = phase === 'pre' ? '🌱' : '🌟';
       const hint = getRecordingHint(phase, idx);
       
       showScreen(`
-        ${renderTutorial(`<strong>🎤 ${phaseLabel} 말하기</strong> 빨간 버튼을 누르고 말해요!`)}
+        ${renderTutorial(`<strong>🎤 ${phaseLabel} 말하기</strong> 음성 녹음 또는 키보드 입력!`)}
         <div style="flex:1; display:flex; align-items:center; justify-content:center; width:100%; min-height:0;">
           <div class="record-card record-card-layout">
             <div class="record-phase-badge" style="background:${phaseColor};">
@@ -2172,17 +2420,53 @@
             <div class="record-hint-box">
               <p class="record-hint-text">${hint}</p>
             </div>
-            <button id="record-btn" class="record-button" onclick="toggleRecording('${phase}', ${idx})">
-              ${ICONS.mic}
-            </button>
-            <div class="record-status" id="record-status">🎤 빨간 버튼을 콕! 눌러주세요</div>
-            <div class="transcript-box" id="transcript-box">
-              <span class="transcript-empty">✏️ 여기에 내 말이 글로 나타나요</span>
+            
+            <!-- 녹음 + 키보드 입력 영역 -->
+            <div class="record-input-area">
+              <button id="record-btn" class="record-button" onclick="toggleRecording('${phase}', ${idx})">
+                ${ICONS.mic}
+              </button>
+              <div class="record-status" id="record-status">🎤 빨간 버튼 누르고 말하기</div>
             </div>
+            
+            <!-- 실시간 STT + 키보드 입력 (textarea) -->
+            <div class="transcript-wrap">
+              <div class="transcript-label">✏️ 여기에 내 말이 글로 나타나요 (직접 써도 돼요!)</div>
+              <textarea 
+                id="transcript-input" 
+                class="transcript-textarea"
+                placeholder="🎤 녹음하거나, ⌨️ 직접 쓸 수 있어요"
+                rows="2"
+                oninput="onTranscriptInput()"
+              ></textarea>
+            </div>
+            
+            <!-- 녹음 후 다시 듣기 + 자기평가 -->
+            <div id="post-record-area" style="display:none;">
+              <div class="post-record-buttons">
+                <button class="btn-listen" onclick="playMyRecording()">
+                  🔊 내 녹음 들어보기
+                </button>
+                <button class="btn-rerecord" onclick="reRecord('${phase}', ${idx})">
+                  🔄 다시 녹음하기
+                </button>
+              </div>
+              <div class="mini-rating">
+                <div class="mini-rating-label">⭐ 내 녹음은 어땠나요?</div>
+                <div class="mini-stars" id="mini-stars">
+                  ${[1,2,3,4,5].map(n => `
+                    <button class="mini-star-btn" data-r="${n}" onclick="setMiniRating(${n}, '${phase}', ${idx})">${StarSvg()}</button>
+                  `).join('')}
+                </div>
+                <div class="mini-rating-text" id="mini-rating-text"></div>
+              </div>
+            </div>
+            
+            <!-- 액션 버튼 -->
             <div class="record-actions">
               <button class="btn-secondary" onclick="skipRecording('${phase}', ${idx})">⏭️ 건너뛰기</button>
               <button id="save-btn" class="btn-main record-save-btn" style="display:none;" onclick="saveAndNext('${phase}', ${idx})">
-                💾 저장 ${ICONS.arrow}
+                💾 저장하고 다음 ${ICONS.arrow}
               </button>
             </div>
           </div>
@@ -2193,15 +2477,67 @@
           </button>
         </div>
       `);
-      // 질문 + 안내 음성 자동 재생
-      autoReadScreen(`${q.질문} 빨간 버튼을 누르고 말해보세요.`);
+      autoReadScreen(`${q.질문} 빨간 버튼을 누르고 말하거나, 직접 키보드로 써도 돼요.`);
     }
+    
+    // 텍스트 입력 시 저장 버튼 활성화
+    window.onTranscriptInput = function() {
+      const text = document.getElementById('transcript-input').value.trim();
+      const saveBtn = document.getElementById('save-btn');
+      if (saveBtn) {
+        saveBtn.style.display = text.length > 0 ? '' : 'none';
+      }
+    };
+    
+    // 자기평가 별 (녹음 후, 한 화면에서 작은 별)
+    window._miniRating = 0;
+    window.setMiniRating = function(n, phase, idx) {
+      playSfx('click');
+      window._miniRating = n;
+      document.querySelectorAll('.mini-star-btn').forEach(btn => {
+        const v = parseInt(btn.dataset.r);
+        btn.classList.toggle('filled', v <= n);
+      });
+      const texts = ['', '많이 어려웠어요', '조금 어려웠어요', '괜찮았어요', '잘 말했어요', '아주 잘 말했어요'];
+      const emojis = ['', '😢', '😕', '🙂', '😊', '🤩'];
+      document.getElementById('mini-rating-text').innerHTML = `${emojis[n]} ${texts[n]}`;
+      // 별 3개 이하면 다시 녹음 권유
+      if (n <= 3) {
+        setTimeout(() => {
+          const status = document.getElementById('record-status');
+          if (status) status.innerHTML = '💡 다시 녹음해볼까요? 위에 🔄 버튼!';
+          speak('다시 녹음해볼까요?');
+        }, 600);
+      }
+    };
+    
+    // 다시 녹음
+    window.reRecord = function(phase, idx) {
+      playSfx('click');
+      window._miniRating = 0;
+      window._currentRecordingBlob = null;
+      // 화면 다시 그리기
+      recordView(phase, idx);
+    };
+    
+    // 내 녹음 다시 듣기
+    window.playMyRecording = function() {
+      if (!window._currentRecordingUrl) {
+        const text = document.getElementById('transcript-input')?.value || '';
+        if (text.trim()) speak(text); // 음성 없으면 TTS로 읽어줌
+        return;
+      }
+      const audio = new Audio(window._currentRecordingUrl);
+      audio.play();
+      playSfx('click');
+    };
 
     async function toggleRecording(phase, idx) {
       const btn = document.getElementById('record-btn');
       const status = document.getElementById('record-status');
-      const transcriptBox = document.getElementById('transcript-box');
+      const textarea = document.getElementById('transcript-input');
       const saveBtn = document.getElementById('save-btn');
+      const postArea = document.getElementById('post-record-area');
       
       if (mediaRecorder && mediaRecorder.state === 'recording') {
         // 녹음 정지
@@ -2209,13 +2545,26 @@
         if (speechRecognition) { try { speechRecognition.stop(); } catch(e) {} }
         btn.classList.remove('recording');
         btn.innerHTML = ICONS.mic;
-        status.textContent = '✅ 녹음 끝! 💾 "저장하고 계속" 버튼을 눌러줘요!';
-        saveBtn.style.display = 'inline-flex';
+        status.textContent = '✅ 녹음 끝! 들어보고 별점도 줘봐요';
         playSfx('success');
-        speak('녹음이 끝났어요. 저장하고 계속해 주세요.');
+        speak('녹음이 끝났어요. 들어보고 별점을 매겨봐요.');
+        // 최종 텍스트 정제 (textarea에 이미 들어가 있음)
         currentTranscript = cleanTranscript(currentTranscript);
-        const finalText = currentTranscript.trim() || '<span class="transcript-empty">😅 (아무 말도 인식되지 않았어요. 다시 녹음해도 돼요!)</span>';
-        transcriptBox.innerHTML = finalText;
+        if (textarea && currentTranscript.trim()) {
+          textarea.value = currentTranscript.trim();
+        }
+        // 녹음 blob URL 만들기 (다시 듣기용)
+        setTimeout(() => {
+          if (recordedChunks.length > 0) {
+            const blob = new Blob(recordedChunks, { type: mediaRecorder.mimeType });
+            window._currentRecordingBlob = blob;
+            window._currentRecordingUrl = URL.createObjectURL(blob);
+          }
+          if (postArea) postArea.style.display = 'block';
+          // 텍스트가 있으면 저장 버튼 표시
+          const text = (textarea?.value || '').trim();
+          if (saveBtn && text.length > 0) saveBtn.style.display = '';
+        }, 300);
         return;
       }
       
@@ -2231,18 +2580,22 @@
         mediaRecorder.onstop = () => stream.getTracks().forEach(t => t.stop());
         
         playSfx('correct');
-        speak('녹음을 시작합니다. 자유롭게 말해보세요.');
+        speak('녹음을 시작해요. 자유롭게 말해보세요.');
         
-        status.textContent = '📢 곧 녹음을 시작해요! 잠깐만요...';
-        await new Promise(r => setTimeout(r, STATE.speakerOn ? 1800 : 300));
+        status.textContent = '📢 곧 시작해요...';
+        await new Promise(r => setTimeout(r, STATE.speakerOn ? 1500 : 300));
         
         mediaRecorder.start();
         
         btn.classList.add('recording');
         btn.innerHTML = ICONS.stop;
-        status.textContent = '🔴 녹음 중! 자유롭게 말해봐요 🗣️ 끝나면 빨간 버튼 다시 눌러요!';
-        transcriptBox.innerHTML = '<span class="transcript-empty">🎧 듣고 있어요... 천천히 말해주세요! 😊</span>';
-        saveBtn.style.display = 'none';
+        status.innerHTML = '🔴 녹음 중! 끝나면 다시 빨간 버튼';
+        if (textarea) {
+          textarea.value = '';
+          textarea.placeholder = '🎧 듣고 있어요... 천천히 말해주세요';
+        }
+        if (postArea) postArea.style.display = 'none';
+        if (saveBtn) saveBtn.style.display = 'none';
         
         const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (SpeechRec) {
@@ -2259,26 +2612,20 @@
             }
             if (final) currentTranscript += cleanTranscript(final) + ' ';
             const cleanInterim = cleanTranscript(interim);
-            const display = currentTranscript + (cleanInterim ? ` <span style="color:#94A3B8;">${cleanInterim}</span>` : '');
-            transcriptBox.innerHTML = display.trim() || '<span class="transcript-empty">🎧 듣고 있어요... 천천히 말해주세요</span>';
+            // textarea에 실시간 표시 (음성 + 키보드 입력 통합)
+            if (textarea) {
+              textarea.value = (currentTranscript + cleanInterim).trim();
+            }
           };
           speechRecognition.onerror = (e) => console.log('STT:', e.error);
           try { speechRecognition.start(); } catch(e) {}
-        } else {
-          transcriptBox.innerHTML = '<span class="transcript-empty">⚠️ 이 브라우저는 음성 인식을 지원하지 않아요. (크롬/엣지 사용 추천!) 🌐</span>';
         }
       } catch (err) {
-        status.textContent = '⚠️ 마이크 권한이 필요해요!';
-        showModal(`
-          <div style="font-size:90px; line-height:1;">🎤🤗</div>
-          <h2 class="modal-title">마이크 권한이 필요해요!</h2>
-          <p class="modal-body">
-            선생님과 함께 마이크를 켜볼까요? 💕<br/>
-            ① 주소창의 <span class="hi-yellow"><strong>자물쇠 🔒</strong></span> 누르고<br/>
-            ② <span class="hi-blue"><strong>마이크 → 허용</strong></span> 으로 바꿔주세요!
-          </p>
-          <button class="btn-secondary" onclick="closeModal()">😊 알겠어요!</button>
-        `);
+        status.textContent = '⚠️ 마이크 사용 불가. 키보드로 직접 써도 돼요!';
+        if (textarea) {
+          textarea.placeholder = '⌨️ 여기에 직접 써주세요';
+          textarea.focus();
+        }
       }
     }
 
@@ -2290,22 +2637,21 @@
     async function saveAndNext(phase, idx) {
       playSfx('click');
       const q = window._currentQuestion;
-      if (!q || recordedChunks.length === 0) {
+      if (!q) {
         skipRecording(phase, idx);
         return;
       }
       
       const saveBtn = document.getElementById('save-btn');
+      const textarea = document.getElementById('transcript-input');
       saveBtn.textContent = '저장 중...';
       saveBtn.disabled = true;
       
-      // 최종 정제 한번 더
-      const finalTranscript = cleanTranscript(currentTranscript);
+      // textarea에서 최종 텍스트 (음성 + 키보드 입력 통합)
+      const finalTranscript = (textarea?.value || '').trim() || cleanTranscript(currentTranscript);
+      const blob = window._currentRecordingBlob;
       
-      const blob = new Blob(recordedChunks, { type: mediaRecorder.mimeType });
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        const base64 = reader.result.split(',')[1];
+      const sendData = async (base64, mimeType) => {
         try {
           await gasPost({
             action: 'saveRecording',
@@ -2315,17 +2661,32 @@
             questionId: q.ID,
             question: q.질문,
             transcript: finalTranscript,
-            audioBase64: base64,
-            mimeType: mediaRecorder.mimeType
+            selfRating: window._miniRating || 0,
+            audioBase64: base64 || '',
+            mimeType: mimeType || ''
           });
           if (phase === 'pre') STATE.preRecordings.push({ qId: q.ID, transcript: finalTranscript });
           else STATE.postRecordings.push({ qId: q.ID, transcript: finalTranscript });
-        } catch (err) {
-          console.error('저장 실패:', err);
-        }
+        } catch (err) { console.error('저장 실패:', err); }
+        playSfx('success');
+        // 별점 초기화
+        window._miniRating = 0;
+        window._currentRecordingBlob = null;
+        window._currentRecordingUrl = null;
         recordView(phase, idx + 1);
       };
-      reader.readAsDataURL(blob);
+      
+      if (blob) {
+        const reader = new FileReader();
+        reader.onloadend = async () => {
+          const base64 = reader.result.split(',')[1];
+          await sendData(base64, blob.type);
+        };
+        reader.readAsDataURL(blob);
+      } else {
+        // 키보드만 입력한 경우 - 텍스트만 저장
+        await sendData('', '');
+      }
     }
 
     // ================================================
@@ -2859,6 +3220,104 @@
     }
 
     // ================================================
+    //  성찰 단계 (학습 후 녹음 끝난 뒤)
+    // ================================================
+    function screenReflection() {
+      // 도움받은 항목 체크 상태
+      window._reflectionHelps = window._reflectionHelps || {
+        teacher: false, friend: false, app: false, none: false
+      };
+      
+      showScreen(`
+        ${renderTutorial('<strong>📝 잠깐!</strong> 오늘 배운 것을 정리해봐요')}
+        <div style="flex:1; display:flex; align-items:center; justify-content:center; width:100%;">
+          <div class="record-card" style="text-align:left;">
+            <div style="text-align:center; font-size: clamp(60px, 9vh, 90px); line-height:1; margin-bottom:clamp(8px, 1.2vh, 14px);">💭</div>
+            <h1 class="intro-title" style="text-align:center;">오늘 배운 것 정리</h1>
+            <p style="text-align:center; font-family:var(--font-display); font-size: clamp(22px, 2.8vh, 28px); color:var(--c-text-light); margin-bottom:clamp(14px, 2vh, 18px); line-height:1.4;">
+              누구에게 도움을 받았나요?<br/>모두 골라주세요
+            </p>
+            
+            <div class="reflect-help-grid">
+              <button class="help-btn" data-help="teacher" onclick="toggleHelp('teacher')">
+                <span class="help-emoji">👩‍🏫</span>
+                <span class="help-label">선생님</span>
+              </button>
+              <button class="help-btn" data-help="friend" onclick="toggleHelp('friend')">
+                <span class="help-emoji">👫</span>
+                <span class="help-label">친구</span>
+              </button>
+              <button class="help-btn" data-help="app" onclick="toggleHelp('app')">
+                <span class="help-emoji">📱</span>
+                <span class="help-label">앱(힌트)</span>
+              </button>
+              <button class="help-btn" data-help="none" onclick="toggleHelp('none')">
+                <span class="help-emoji">💪</span>
+                <span class="help-label">혼자 했어요</span>
+              </button>
+            </div>
+            
+            <div class="reflect-confidence">
+              <p class="reflect-confidence-label">🎯 분류하기, 이제 자신 있나요?</p>
+              <div class="confidence-buttons" id="confidence-buttons">
+                <button class="conf-btn" data-conf="1" onclick="setConfidence(1)">😅<br/>아직<br/>어려워요</button>
+                <button class="conf-btn" data-conf="2" onclick="setConfidence(2)">🤔<br/>조금<br/>알겠어요</button>
+                <button class="conf-btn" data-conf="3" onclick="setConfidence(3)">😊<br/>할 수<br/>있어요</button>
+                <button class="conf-btn" data-conf="4" onclick="setConfidence(4)">🤩<br/>아주<br/>잘해요</button>
+              </div>
+            </div>
+            
+            <button class="btn-main" id="reflect-next" disabled onclick="goToSelfRating()" style="margin-top:clamp(10px, 1.5vh, 14px);">
+              자기평가 하러 가기 ${ICONS.arrow}
+            </button>
+          </div>
+        </div>
+      `);
+      autoReadScreen('잠깐! 오늘 배운 것을 정리해봐요. 누구에게 도움을 받았나요? 모두 골라주세요. 그리고 분류하기 이제 자신 있나요?');
+    }
+    
+    window.toggleHelp = function(key) {
+      playSfx('click');
+      window._reflectionHelps[key] = !window._reflectionHelps[key];
+      // "혼자 했어요"를 누르면 다른 거 다 해제
+      if (key === 'none' && window._reflectionHelps.none) {
+        ['teacher', 'friend', 'app'].forEach(k => window._reflectionHelps[k] = false);
+      } else if (key !== 'none' && window._reflectionHelps[key]) {
+        window._reflectionHelps.none = false;
+      }
+      // UI 갱신
+      document.querySelectorAll('.help-btn').forEach(btn => {
+        const k = btn.dataset.help;
+        btn.classList.toggle('checked', window._reflectionHelps[k]);
+      });
+      checkReflectReady();
+    };
+    
+    window.setConfidence = function(n) {
+      playSfx('click');
+      window._reflectionConfidence = n;
+      document.querySelectorAll('.conf-btn').forEach(btn => {
+        btn.classList.toggle('checked', parseInt(btn.dataset.conf) === n);
+      });
+      checkReflectReady();
+    };
+    
+    function checkReflectReady() {
+      const helpAny = Object.values(window._reflectionHelps || {}).some(v => v);
+      const conf = window._reflectionConfidence || 0;
+      const btn = document.getElementById('reflect-next');
+      if (btn) btn.disabled = !(helpAny && conf > 0);
+    }
+    
+    window.goToSelfRating = function() {
+      playSfx('click');
+      // 도움받은 정보 저장 (Apps Script로 전송)
+      STATE.reflectionHelps = window._reflectionHelps;
+      STATE.reflectionConfidence = window._reflectionConfidence;
+      screenSelfRating();
+    };
+
+    // ================================================
     //  자기평가
     // ================================================
     function screenSelfRating() {
@@ -2932,6 +3391,8 @@
             activity4Count: STATE.scores.a4,
             selfRating: STATE.selfRating,
             retryCount: STATE.retryCount,
+            reflectionHelps: STATE.reflectionHelps || {},
+            reflectionConfidence: STATE.reflectionConfidence || 0,
             totalSeconds: totalSec
           });
         } catch (err) { console.error(err); }
