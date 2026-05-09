@@ -1077,92 +1077,6 @@
       line-height: 1.3;
     }
     
-    /* === 성찰 단계 (도움 받은 사람 체크) === */
-    .reflect-help-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: clamp(8px, 1.2vw, 14px);
-      margin-bottom: clamp(14px, 2vh, 20px);
-    }
-    .help-btn {
-      background: white;
-      border: 4px solid #E0E7FF;
-      border-radius: 18px;
-      padding: clamp(12px, 1.8vh, 16px) clamp(8px, 1.2vw, 12px);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: clamp(4px, 0.6vh, 8px);
-      cursor: pointer;
-      transition: all 0.15s;
-      font-family: var(--font-display);
-      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-    }
-    .help-btn:hover {
-      transform: translateY(-2px);
-      border-color: var(--c-primary);
-    }
-    .help-btn.checked {
-      background: linear-gradient(135deg, #FBBF24, #F59E0B);
-      color: white;
-      border-color: #D97706;
-      transform: scale(1.05);
-      box-shadow: 0 6px 14px rgba(251, 191, 36, 0.4);
-    }
-    .help-emoji {
-      font-size: clamp(34px, 5vh, 50px);
-      line-height: 1;
-    }
-    .help-label {
-      font-size: clamp(16px, 2.2vh, 20px);
-      font-weight: bold;
-      color: inherit;
-    }
-    
-    /* 자신감 평가 */
-    .reflect-confidence {
-      background: #F0F9FF;
-      border: 3px solid #BAE6FD;
-      border-radius: 18px;
-      padding: clamp(12px, 1.8vh, 18px);
-      margin-bottom: clamp(10px, 1.5vh, 14px);
-    }
-    .reflect-confidence-label {
-      font-family: var(--font-display);
-      font-size: clamp(22px, 2.8vh, 28px);
-      color: #0C4A6E;
-      text-align: center;
-      margin-bottom: clamp(8px, 1.2vh, 12px);
-    }
-    .confidence-buttons {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: clamp(6px, 1vw, 10px);
-    }
-    .conf-btn {
-      background: white;
-      border: 3px solid #E0E7FF;
-      border-radius: 14px;
-      padding: clamp(10px, 1.6vh, 14px) clamp(4px, 0.8vw, 8px);
-      cursor: pointer;
-      font-family: var(--font-display);
-      font-size: clamp(16px, 2.2vh, 20px);
-      line-height: 1.3;
-      transition: all 0.15s;
-      box-shadow: 0 3px 8px rgba(0,0,0,0.05);
-      color: var(--c-text);
-    }
-    .conf-btn:hover {
-      transform: translateY(-2px);
-      border-color: var(--c-primary);
-    }
-    .conf-btn.checked {
-      background: linear-gradient(135deg, #6366F1, #8B5CF6);
-      color: white;
-      border-color: #4338CA;
-      transform: scale(1.05);
-      box-shadow: 0 6px 14px rgba(99, 102, 241, 0.4);
-    }
     
     /* 액션 버튼 영역 - 항상 카드 안에 보이게 */
     .record-actions {
@@ -1531,8 +1445,10 @@
       startTime: null,
       selfRating: 0,
       retryCount: 0,
-      reflectionHelps: { teacher: false, friend: false, app: false, none: false },
-      reflectionConfidence: 0
+      // 자동 수집 통계
+      keyboardCount: 0,    // 키보드만 입력한 녹음 수
+      voiceCount: 0,       // 음성 녹음 수
+      reRecordCount: 0     // 다시 녹음한 횟수
     };
 
     // ================================================
@@ -2397,7 +2313,7 @@
       const questions = phase === 'pre' ? (STATE.data.preQuestions || []) : (STATE.data.postQuestions || []);
       if (questions.length === 0 || idx >= questions.length) {
         if (phase === 'pre') screenActivity1();
-        else screenReflection();  // 학습 후 → 성찰 단계
+        else screenSelfRating();
         return;
       }
       const q = questions[idx];
@@ -2516,6 +2432,7 @@
       playSfx('click');
       window._miniRating = 0;
       window._currentRecordingBlob = null;
+      STATE.reRecordCount = (STATE.reRecordCount || 0) + 1;
       // 화면 다시 그리기
       recordView(phase, idx);
     };
@@ -2677,6 +2594,8 @@
       };
       
       if (blob) {
+        // 음성 녹음 카운트
+        STATE.voiceCount = (STATE.voiceCount || 0) + 1;
         const reader = new FileReader();
         reader.onloadend = async () => {
           const base64 = reader.result.split(',')[1];
@@ -2685,6 +2604,7 @@
         reader.readAsDataURL(blob);
       } else {
         // 키보드만 입력한 경우 - 텍스트만 저장
+        STATE.keyboardCount = (STATE.keyboardCount || 0) + 1;
         await sendData('', '');
       }
     }
@@ -3220,104 +3140,6 @@
     }
 
     // ================================================
-    //  성찰 단계 (학습 후 녹음 끝난 뒤)
-    // ================================================
-    function screenReflection() {
-      // 도움받은 항목 체크 상태
-      window._reflectionHelps = window._reflectionHelps || {
-        teacher: false, friend: false, app: false, none: false
-      };
-      
-      showScreen(`
-        ${renderTutorial('<strong>📝 잠깐!</strong> 오늘 배운 것을 정리해봐요')}
-        <div style="flex:1; display:flex; align-items:center; justify-content:center; width:100%;">
-          <div class="record-card" style="text-align:left;">
-            <div style="text-align:center; font-size: clamp(60px, 9vh, 90px); line-height:1; margin-bottom:clamp(8px, 1.2vh, 14px);">💭</div>
-            <h1 class="intro-title" style="text-align:center;">오늘 배운 것 정리</h1>
-            <p style="text-align:center; font-family:var(--font-display); font-size: clamp(22px, 2.8vh, 28px); color:var(--c-text-light); margin-bottom:clamp(14px, 2vh, 18px); line-height:1.4;">
-              누구에게 도움을 받았나요?<br/>모두 골라주세요
-            </p>
-            
-            <div class="reflect-help-grid">
-              <button class="help-btn" data-help="teacher" onclick="toggleHelp('teacher')">
-                <span class="help-emoji">👩‍🏫</span>
-                <span class="help-label">선생님</span>
-              </button>
-              <button class="help-btn" data-help="friend" onclick="toggleHelp('friend')">
-                <span class="help-emoji">👫</span>
-                <span class="help-label">친구</span>
-              </button>
-              <button class="help-btn" data-help="app" onclick="toggleHelp('app')">
-                <span class="help-emoji">📱</span>
-                <span class="help-label">앱(힌트)</span>
-              </button>
-              <button class="help-btn" data-help="none" onclick="toggleHelp('none')">
-                <span class="help-emoji">💪</span>
-                <span class="help-label">혼자 했어요</span>
-              </button>
-            </div>
-            
-            <div class="reflect-confidence">
-              <p class="reflect-confidence-label">🎯 분류하기, 이제 자신 있나요?</p>
-              <div class="confidence-buttons" id="confidence-buttons">
-                <button class="conf-btn" data-conf="1" onclick="setConfidence(1)">😅<br/>아직<br/>어려워요</button>
-                <button class="conf-btn" data-conf="2" onclick="setConfidence(2)">🤔<br/>조금<br/>알겠어요</button>
-                <button class="conf-btn" data-conf="3" onclick="setConfidence(3)">😊<br/>할 수<br/>있어요</button>
-                <button class="conf-btn" data-conf="4" onclick="setConfidence(4)">🤩<br/>아주<br/>잘해요</button>
-              </div>
-            </div>
-            
-            <button class="btn-main" id="reflect-next" disabled onclick="goToSelfRating()" style="margin-top:clamp(10px, 1.5vh, 14px);">
-              자기평가 하러 가기 ${ICONS.arrow}
-            </button>
-          </div>
-        </div>
-      `);
-      autoReadScreen('잠깐! 오늘 배운 것을 정리해봐요. 누구에게 도움을 받았나요? 모두 골라주세요. 그리고 분류하기 이제 자신 있나요?');
-    }
-    
-    window.toggleHelp = function(key) {
-      playSfx('click');
-      window._reflectionHelps[key] = !window._reflectionHelps[key];
-      // "혼자 했어요"를 누르면 다른 거 다 해제
-      if (key === 'none' && window._reflectionHelps.none) {
-        ['teacher', 'friend', 'app'].forEach(k => window._reflectionHelps[k] = false);
-      } else if (key !== 'none' && window._reflectionHelps[key]) {
-        window._reflectionHelps.none = false;
-      }
-      // UI 갱신
-      document.querySelectorAll('.help-btn').forEach(btn => {
-        const k = btn.dataset.help;
-        btn.classList.toggle('checked', window._reflectionHelps[k]);
-      });
-      checkReflectReady();
-    };
-    
-    window.setConfidence = function(n) {
-      playSfx('click');
-      window._reflectionConfidence = n;
-      document.querySelectorAll('.conf-btn').forEach(btn => {
-        btn.classList.toggle('checked', parseInt(btn.dataset.conf) === n);
-      });
-      checkReflectReady();
-    };
-    
-    function checkReflectReady() {
-      const helpAny = Object.values(window._reflectionHelps || {}).some(v => v);
-      const conf = window._reflectionConfidence || 0;
-      const btn = document.getElementById('reflect-next');
-      if (btn) btn.disabled = !(helpAny && conf > 0);
-    }
-    
-    window.goToSelfRating = function() {
-      playSfx('click');
-      // 도움받은 정보 저장 (Apps Script로 전송)
-      STATE.reflectionHelps = window._reflectionHelps;
-      STATE.reflectionConfidence = window._reflectionConfidence;
-      screenSelfRating();
-    };
-
-    // ================================================
     //  자기평가
     // ================================================
     function screenSelfRating() {
@@ -3391,8 +3213,9 @@
             activity4Count: STATE.scores.a4,
             selfRating: STATE.selfRating,
             retryCount: STATE.retryCount,
-            reflectionHelps: STATE.reflectionHelps || {},
-            reflectionConfidence: STATE.reflectionConfidence || 0,
+            voiceCount: STATE.voiceCount || 0,
+            keyboardCount: STATE.keyboardCount || 0,
+            reRecordCount: STATE.reRecordCount || 0,
             totalSeconds: totalSec
           });
         } catch (err) { console.error(err); }
