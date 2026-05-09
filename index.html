@@ -294,28 +294,28 @@
     /* 버튼 */
     .btn-main {
       width: 100%;
-      padding: clamp(14px, 2.2vh, 22px);
+      padding: clamp(12px, 1.8vh, 18px);
       background: linear-gradient(180deg, #818CF8, #6366F1);
       color: white;
-      border-radius: clamp(18px, 2.5vw, 28px);
+      border-radius: clamp(14px, 2vw, 22px);
       font-family: var(--font-display);
-      font-size: clamp(43px, 4.7vh, 55px);
-      box-shadow: 0 8px 0 0 #4338CA, 0 12px 24px rgba(99, 102, 241, 0.3);
+      font-size: clamp(24px, 3.2vh, 32px);
+      box-shadow: 0 6px 0 0 #4338CA, 0 10px 20px rgba(99, 102, 241, 0.3);
       transition: all 0.15s;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.3px;
     }
     .btn-main:hover { transform: translateY(-2px); }
-    .btn-main:active { transform: translateY(6px); box-shadow: 0 2px 0 0 #4338CA; }
+    .btn-main:active { transform: translateY(4px); box-shadow: 0 2px 0 0 #4338CA; }
     .btn-main:disabled { background: #CBD5E1; box-shadow: 0 4px 0 0 #94A3B8; cursor: not-allowed; }
     
     .btn-secondary {
-      padding: clamp(14px, 2.2vh, 20px) clamp(20px, 3vw, 28px);
+      padding: clamp(10px, 1.6vh, 14px) clamp(16px, 2.4vw, 22px);
       background: white;
       color: var(--c-primary);
       border: 3px solid var(--c-primary-light);
-      border-radius: 22px;
+      border-radius: 18px;
       font-family: var(--font-display);
-      font-size: clamp(38px, 4.1vh, 43px);
+      font-size: clamp(20px, 2.6vh, 25px);
       box-shadow: 0 4px 0 0 var(--c-primary-light);
       transition: all 0.15s;
     }
@@ -874,53 +874,57 @@
     /* 녹음 카드 레이아웃 - 모든 요소가 한눈에 보이게 */
     .record-card-layout {
       justify-content: flex-start !important;
-      gap: clamp(6px, 1vh, 12px);
+      gap: clamp(5px, 0.8vh, 10px);
     }
-    /* 단계 뱃지 (학습 전/후) */
+    /* 단계 뱃지 - 작게 */
     .record-phase-badge {
       align-self: center;
       color: white;
-      padding: clamp(8px, 1.2vh, 12px) clamp(20px, 2.8vw, 28px);
+      padding: clamp(4px, 0.7vh, 7px) clamp(14px, 2vw, 22px);
       border-radius: 999px;
       font-family: var(--font-display);
-      font-size: clamp(28px, 2.9vh, 34px);
+      font-size: clamp(18px, 2.2vh, 24px);
       flex-shrink: 0;
     }
+    /* 질문 - 적당히 */
     .record-question {
       font-family: var(--font-display);
-      font-size: clamp(28px, 3.6vh, 38px);
+      font-size: clamp(24px, 3.2vh, 32px);
       color: var(--c-text);
       line-height: 1.3;
       word-break: keep-all;
-      padding: clamp(10px, 1.6vh, 16px) clamp(14px, 2vw, 20px);
+      padding: clamp(8px, 1.3vh, 12px) clamp(12px, 1.8vw, 18px);
       background: #FFFBEB;
-      border-radius: 16px;
-      border: 4px solid #FCD34D;
+      border-radius: 14px;
+      border: 3px solid #FCD34D;
       flex-shrink: 0;
+      text-align: center;
     }
+    /* 힌트 - 작게 */
     .record-hint-box {
       background: #FEF3C7;
-      border: 3px solid #FBBF24;
-      border-radius: 14px;
-      padding: clamp(8px, 1.2vh, 12px) clamp(12px, 2vw, 18px);
+      border: 2px solid #FBBF24;
+      border-radius: 12px;
+      padding: clamp(6px, 0.9vh, 9px) clamp(10px, 1.6vw, 14px);
       text-align: center;
       flex-shrink: 0;
     }
     .record-hint-text {
       color: #78350F;
-      font-size: clamp(26px, 2.8vh, 32px);
-      line-height: 1.4;
+      font-size: clamp(18px, 2.2vh, 22px);
+      line-height: 1.3;
       word-break: keep-all;
       font-family: var(--font-display);
     }
+    /* 녹음 버튼 - 적당한 크기 */
     .record-button {
-      width: clamp(80px, 11vh, 110px);
-      height: clamp(80px, 11vh, 110px);
+      width: clamp(64px, 9vh, 88px);
+      height: clamp(64px, 9vh, 88px);
       border-radius: 50%;
       background: linear-gradient(135deg, #EF4444, #DC2626);
       color: white;
-      font-size: clamp(40px, 6vh, 60px);
-      box-shadow: 0 8px 24px rgba(239, 68, 68, 0.4), 0 0 0 0 rgba(239, 68, 68, 0.5);
+      font-size: clamp(32px, 4.5vh, 48px);
+      box-shadow: 0 6px 18px rgba(239, 68, 68, 0.4), 0 0 0 0 rgba(239, 68, 68, 0.5);
       transition: all 0.2s;
       margin: 0 auto;
       display: flex; align-items: center; justify-content: center;
@@ -931,65 +935,43 @@
       animation: pulse-record 1.2s infinite;
     }
     @keyframes pulse-record {
-      0%, 100% { box-shadow: 0 8px 24px rgba(239, 68, 68, 0.4), 0 0 0 0 rgba(239, 68, 68, 0.5); }
-      50% { box-shadow: 0 8px 24px rgba(239, 68, 68, 0.4), 0 0 0 28px rgba(239, 68, 68, 0); }
+      0%, 100% { box-shadow: 0 6px 18px rgba(239, 68, 68, 0.4), 0 0 0 0 rgba(239, 68, 68, 0.5); }
+      50% { box-shadow: 0 6px 18px rgba(239, 68, 68, 0.4), 0 0 0 22px rgba(239, 68, 68, 0); }
     }
+    /* 상태 - 작게 */
     .record-status {
       font-family: var(--font-display);
-      font-size: clamp(26px, 2.8vh, 32px);
+      font-size: clamp(18px, 2.2vh, 22px);
       color: var(--c-text-light);
       flex-shrink: 0;
-    }
-    .transcript-box {
-      padding: clamp(10px, 1.5vh, 16px);
-      background: #F0F9FF;
-      border: 3px solid #BAE6FD;
-      border-radius: 16px;
-      font-family: var(--font-display);
-      font-size: clamp(24px, 2.6vh, 30px);
-      color: var(--c-text);
-      min-height: clamp(50px, 7vh, 70px);
-      max-height: clamp(60px, 9vh, 90px);
-      text-align: left;
-      line-height: 1.4;
-      overflow-y: auto;
-      flex-shrink: 1;
+      text-align: center;
     }
     .transcript-empty { color: #94A3B8; font-family: var(--font-display); }
     
-    /* === 새 녹음 화면 컴포넌트들 === */
+    /* 녹음 입력 영역 - 버튼+상태 콤팩트 */
     .record-input-area {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: clamp(6px, 1vh, 10px);
+      gap: clamp(3px, 0.5vh, 6px);
       flex-shrink: 0;
     }
-    .transcript-wrap {
-      display: flex; flex-direction: column;
-      gap: clamp(4px, 0.7vh, 8px);
-      flex-shrink: 0;
-    }
-    .transcript-label {
-      font-family: var(--font-display);
-      font-size: clamp(18px, 2.3vh, 22px);
-      color: var(--c-text-light);
-      text-align: left;
-      padding-left: 4px;
-    }
+    
+    /* textarea - 적당히 */
     .transcript-textarea {
       width: 100%;
-      padding: clamp(10px, 1.6vh, 14px) clamp(12px, 1.8vw, 16px);
+      padding: clamp(8px, 1.2vh, 12px) clamp(10px, 1.5vw, 14px);
       background: #F0F9FF;
-      border: 3px solid #BAE6FD;
-      border-radius: 16px;
+      border: 2px solid #BAE6FD;
+      border-radius: 12px;
       font-family: var(--font-display);
-      font-size: clamp(22px, 2.7vh, 28px);
+      font-size: clamp(18px, 2.4vh, 24px);
       color: var(--c-text);
-      line-height: 1.4;
+      line-height: 1.3;
       resize: none;
       outline: none;
       transition: border-color 0.15s;
+      flex-shrink: 0;
     }
     .transcript-textarea:focus {
       border-color: var(--c-primary);
@@ -998,64 +980,60 @@
     .transcript-textarea::placeholder {
       color: #94A3B8;
       font-family: var(--font-display);
+      font-size: clamp(16px, 2vh, 20px);
     }
     
-    /* 녹음 후 다시 듣기 + 자기평가 영역 */
+    /* 녹음 후 영역 - 한 줄로 콤팩트 */
     #post-record-area {
       background: #FAF5FF;
-      border: 3px solid #E9D5FF;
-      border-radius: 16px;
-      padding: clamp(10px, 1.5vh, 16px);
+      border: 2px solid #E9D5FF;
+      border-radius: 12px;
+      padding: clamp(6px, 0.9vh, 10px) clamp(8px, 1.2vw, 12px);
       flex-shrink: 0;
       animation: pop-in 0.3s ease;
     }
-    .post-record-buttons {
+    /* 한 줄 레이아웃: 들어보기 / 다시 / 별 5개 */
+    .post-compact-row {
       display: flex;
       gap: clamp(6px, 1vw, 10px);
       justify-content: center;
+      align-items: center;
       flex-wrap: wrap;
-      margin-bottom: clamp(8px, 1.2vh, 12px);
     }
     .btn-listen, .btn-rerecord {
-      padding: clamp(10px, 1.6vh, 14px) clamp(14px, 2.2vw, 20px);
+      padding: clamp(6px, 0.9vh, 9px) clamp(10px, 1.5vw, 14px);
       border-radius: 999px;
       font-family: var(--font-display);
-      font-size: clamp(18px, 2.4vh, 22px);
+      font-size: clamp(15px, 2vh, 18px);
       transition: all 0.15s;
-      border: 3px solid;
+      border: 2px solid;
+      flex-shrink: 0;
     }
     .btn-listen {
       background: white;
       color: #6366F1;
       border-color: #C7D2FE;
     }
-    .btn-listen:hover { background: #EEF2FF; transform: translateY(-2px); }
+    .btn-listen:hover { background: #EEF2FF; transform: translateY(-1px); }
     .btn-rerecord {
       background: white;
       color: #DC2626;
       border-color: #FECACA;
     }
-    .btn-rerecord:hover { background: #FEE2E2; transform: translateY(-2px); }
+    .btn-rerecord:hover { background: #FEE2E2; transform: translateY(-1px); }
     
-    /* 미니 별점 (녹음 후) */
-    .mini-rating {
-      text-align: center;
-    }
-    .mini-rating-label {
-      font-family: var(--font-display);
-      font-size: clamp(20px, 2.6vh, 26px);
-      color: var(--c-primary-dark);
-      margin-bottom: clamp(6px, 1vh, 10px);
-    }
-    .mini-stars {
+    /* 별 5개 인라인 - 작게 */
+    .mini-stars-inline {
       display: flex;
-      justify-content: center;
-      gap: clamp(4px, 0.8vw, 8px);
-      margin-bottom: clamp(4px, 0.8vh, 8px);
+      gap: clamp(2px, 0.3vw, 4px);
+      align-items: center;
+      flex-shrink: 0;
+      padding-left: clamp(4px, 0.6vw, 8px);
+      border-left: 2px solid #E9D5FF;
     }
     .mini-star-btn {
-      width: clamp(40px, 6vh, 56px);
-      height: clamp(40px, 6vh, 56px);
+      width: clamp(28px, 4vh, 38px);
+      height: clamp(28px, 4vh, 38px);
       background: transparent;
       border: none;
       padding: 0;
@@ -1071,10 +1049,12 @@
     .mini-star-btn:hover { transform: scale(1.15); }
     .mini-rating-text {
       font-family: var(--font-display);
-      font-size: clamp(20px, 2.5vh, 24px);
+      font-size: clamp(16px, 2vh, 20px);
       color: var(--c-primary-dark);
-      min-height: clamp(28px, 3.5vh, 36px);
-      line-height: 1.3;
+      text-align: center;
+      margin-top: clamp(3px, 0.5vh, 6px);
+      min-height: clamp(20px, 2.6vh, 28px);
+      line-height: 1.2;
     }
     
     
@@ -1336,7 +1316,7 @@
       .intro-title { font-size: clamp(33px, 5.3vh, 45px) !important; }
       .intro-grid { gap: 4px; }
       .intro-card-mini { padding: 6px !important; font-size: clamp(28px, 3.9vh, 37px) !important; }
-      .btn-main { padding: 10px !important; font-size: clamp(28px, 4.6vh, 39px) !important; }
+      .btn-main { padding: 8px !important; font-size: clamp(20px, 3vh, 26px) !important; }
     }
     
     /* === 가로 화면에서 sort-main 비율 조정 === */
@@ -2326,7 +2306,6 @@
       const hint = getRecordingHint(phase, idx);
       
       showScreen(`
-        ${renderTutorial(`<strong>🎤 ${phaseLabel} 말하기</strong> 음성 녹음 또는 키보드 입력!`)}
         <div style="flex:1; display:flex; align-items:center; justify-content:center; width:100%; min-height:0;">
           <div class="record-card record-card-layout">
             <div class="record-phase-badge" style="background:${phaseColor};">
@@ -2337,45 +2316,35 @@
               <p class="record-hint-text">${hint}</p>
             </div>
             
-            <!-- 녹음 + 키보드 입력 영역 -->
+            <!-- 녹음 버튼 + 상태 -->
             <div class="record-input-area">
               <button id="record-btn" class="record-button" onclick="toggleRecording('${phase}', ${idx})">
                 ${ICONS.mic}
               </button>
-              <div class="record-status" id="record-status">🎤 빨간 버튼 누르고 말하기</div>
+              <div class="record-status" id="record-status">🎤 누르고 말하기</div>
             </div>
             
-            <!-- 실시간 STT + 키보드 입력 (textarea) -->
-            <div class="transcript-wrap">
-              <div class="transcript-label">✏️ 여기에 내 말이 글로 나타나요 (직접 써도 돼요!)</div>
-              <textarea 
-                id="transcript-input" 
-                class="transcript-textarea"
-                placeholder="🎤 녹음하거나, ⌨️ 직접 쓸 수 있어요"
-                rows="2"
-                oninput="onTranscriptInput()"
-              ></textarea>
-            </div>
+            <!-- 실시간 STT + 키보드 입력 -->
+            <textarea 
+              id="transcript-input" 
+              class="transcript-textarea"
+              placeholder="🎤 녹음하거나 ⌨️ 직접 써도 돼요"
+              rows="2"
+              oninput="onTranscriptInput()"
+            ></textarea>
             
-            <!-- 녹음 후 다시 듣기 + 자기평가 -->
+            <!-- 녹음 후 다시 듣기 + 자기평가 (한 줄로) -->
             <div id="post-record-area" style="display:none;">
-              <div class="post-record-buttons">
-                <button class="btn-listen" onclick="playMyRecording()">
-                  🔊 내 녹음 들어보기
-                </button>
-                <button class="btn-rerecord" onclick="reRecord('${phase}', ${idx})">
-                  🔄 다시 녹음하기
-                </button>
-              </div>
-              <div class="mini-rating">
-                <div class="mini-rating-label">⭐ 내 녹음은 어땠나요?</div>
-                <div class="mini-stars" id="mini-stars">
+              <div class="post-compact-row">
+                <button class="btn-listen" onclick="playMyRecording()">🔊 들어보기</button>
+                <button class="btn-rerecord" onclick="reRecord('${phase}', ${idx})">🔄 다시</button>
+                <div class="mini-stars-inline" id="mini-stars">
                   ${[1,2,3,4,5].map(n => `
                     <button class="mini-star-btn" data-r="${n}" onclick="setMiniRating(${n}, '${phase}', ${idx})">${StarSvg()}</button>
                   `).join('')}
                 </div>
-                <div class="mini-rating-text" id="mini-rating-text"></div>
               </div>
+              <div class="mini-rating-text" id="mini-rating-text"></div>
             </div>
             
             <!-- 액션 버튼 -->
@@ -2393,7 +2362,7 @@
           </button>
         </div>
       `);
-      autoReadScreen(`${q.질문} 빨간 버튼을 누르고 말하거나, 직접 키보드로 써도 돼요.`);
+      autoReadScreen(`${q.질문}`);
     }
     
     // 텍스트 입력 시 저장 버튼 활성화
@@ -3020,7 +2989,22 @@
       })));
       a4State.activeBlocks = blocks;
       a4State.bins.forEach(b => b.items = []);
-      const binColors = ['rose', 'emerald', 'amber', 'sky', 'violet', 'orange'];
+      const defaultColors = ['rose', 'emerald', 'amber', 'sky', 'violet', 'orange'];
+      
+      // 분류함 색깔: 라벨(빨강/파랑/노랑/초록 등)에 맞게 자동 매칭
+      // 매칭 안 되면 defaultColors 순서대로
+      function pickBinColor(label, fallbackIdx) {
+        const t = String(label || '').trim();
+        // 한국어 색깔 → CSS 클래스 매핑
+        if (/빨강|빨간|red/i.test(t)) return 'rose';
+        if (/파랑|파란|blue/i.test(t)) return 'sky';
+        if (/노랑|노란|yellow/i.test(t)) return 'amber';
+        if (/초록|녹색|green/i.test(t)) return 'emerald';
+        if (/보라|보랏|purple|violet/i.test(t)) return 'violet';
+        if (/주황|오렌지|orange/i.test(t)) return 'orange';
+        // 모양 기준 매칭 (모양은 색상 매칭 안 하지만, 일관성)
+        return defaultColors[fallbackIdx % defaultColors.length];
+      }
       
       // 탐구 질문 - 사용자가 정한 기준 사용
       const inquiryQuestion = `🤔 ${a4State.criterion}이(가) 어떤가요?`;
@@ -3041,7 +3025,7 @@
           </div>
           <div class="bins-column" style="--bin-count:${a4State.bins.length}">
             ${a4State.bins.map((b, i) => `
-              <div class="drop-bin bin-${binColors[i % binColors.length]}" id="${b.id}">
+              <div class="drop-bin bin-${pickBinColor(b.label, i)}" id="${b.id}">
                 <div class="bin-label-row">
                   <span class="bin-label">${b.label}</span>
                   <span class="bin-count" id="count-${b.id}">(0개)</span>
